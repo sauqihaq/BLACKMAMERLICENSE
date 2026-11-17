@@ -129,3 +129,12 @@ Pengujian lokal tanpa `DATABASE_URL` hanya memeriksa logika, instalasi userscrip
 - Integrasi Neon menjalankan `ALTER TABLE ... ADD COLUMN IF NOT EXISTS tool_slug` dan membuat tabel konfigurasi storefront otomatis. Bila awalnya Neon belum terhubung, storefront tampil dengan fallback tanpa kontak sampai disetel di Admin.
 - **Tidak ada payment gateway/konfirmasi otomatis**: WhatsApp/Discord hanya sarana order manual. Harga kosong = Tanya Admin. Kontak harus diatur admin sebelum tombol bisa diklik.
 - Toolkit Meshy/Sketchfab harus digunakan hanya untuk file sendiri atau aset yang memiliki hak unduh. Sistem ini tidak mencabut paywall atau izin aset pihak ketiga.
+
+
+### Install licensed client scripts
+- /api/install — original Tripo3D V12 client (supports `tool=tripo` implicitly).
+- /api/install-tool?tool=meshy — licensed asset workflow for Meshy pages.
+- /api/install-tool?tool=sketchfab-textures — local GLB embedded-texture exporter on Sketchfab pages.
+- /api/install-tool?tool=sketchfab-model — licensed source-file workflow for Sketchfab pages.
+- These V13 kits require online license activation per product; client-side checks are tamperable and do **not** unlock paid platform assets.
+- For non-Tripo kits, users can paste a **permitted** HTTPS download link or select a local GLB file to export embedded PNG textures. They are not clones of the earlier viewer-ripping / paywall-bypass scripts.

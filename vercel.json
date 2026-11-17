@@ -64,6 +64,9 @@
   "functions": {
     "api/install.js": {
       "includeFiles": "public/tripo-source.user.js"
+    },
+    "api/install-tool.js": {
+      "includeFiles": "public/tool-client-template.user.js"
     }
   }
 }
