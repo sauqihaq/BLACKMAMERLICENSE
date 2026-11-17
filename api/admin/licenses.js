@@ -2,7 +2,9 @@ import {apiHandler,body,method,http,error,cleanName,allowedPlans,createId,newKey
 import {requireAdmin} from '../../lib/auth.js';
 import {setup,query,audit} from '../../lib/store.js';
 import {isTool} from '../../lib/catalog.js';
+import adminDelivery from '../../lib/routes/admin-delivery.js';
 export default apiHandler(async(req,res)=>{
+  if(req.query?.view==='delivery')return adminDelivery(req,res);
   if(!method(req,res,['GET','POST']))return;
   if(!requireAdmin(req,res,{mutate:req.method==='POST'}))return;
   await setup();
