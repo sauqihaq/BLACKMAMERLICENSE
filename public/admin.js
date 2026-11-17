@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const viewNames = {overview:'Overview',licenses:'License Manager',activity:'Activity Logs',security:'Security & Info'};
+  const viewNames = {overview:'Overview',licenses:'License Manager',activity:'Activity Logs',store:'Store Settings',security:'Security & Info'};
   const state = {licenses:[],events:[],summary:null,total:0,loading:false,chosen:null,issuedKey:'',tab:'overview',offset:0,limit:250};
   const html = value => String(value??'').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const date = value => value ? new Date(value).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}) : '—';
@@ -26,13 +26,14 @@
     if(state.loading)return;
     state.loading=true;const btn=$('refresh-btn');btn.disabled=true;
     try{
-      const [summary,lic,log]=await Promise.all([
+      const [summary,lic,log,store]=await Promise.all([
         api('/api/admin/summary'),
         api(`/api/admin/licenses?limit=${state.limit}&offset=0`),
-        api('/api/admin/events?limit=500')
+        api('/api/admin/events?limit=500'),
+        api('/api/admin/store')
       ]);
-      state.summary=summary.summary;state.licenses=lic.licenses;state.total=lic.total;state.offset=state.licenses.length;state.events=log.events;
-      render();
+      state.summary=summary.summary;state.licenses=lic.licenses;state.total=lic.total;state.offset=state.licenses.length;state.events=log.events;state.store=store.settings;
+      render();renderStore();
     }catch(err){notice(err.message,true);}
     finally{state.loading=false;btn.disabled=false;}
   }
@@ -41,6 +42,13 @@
     catch(err){notice(err.message,true);}
   }
   function render(){renderStats();renderOverview();renderLicenses();renderEvents();}
+  function renderStore(){
+    const s=state.store;if(!s)return;
+    $('store-discord').value=s.discord_url||'';
+    $('store-whatsapp').value=s.whatsapp_number||'';
+    $('store-note').value=s.contact_note||'';
+    ['tripo','meshy','sketchfab-textures','sketchfab-model'].forEach(t=>$('price-'+t).value=s.prices?.[t]??'');
+  }
   function renderStats(){const s=state.summary||{};$('stat-total').textContent=s.total??'—';$('stat-active').textContent=s.active??'—';$('stat-online').textContent=s.online24h??'—';$('stat-blocked').textContent=s.blocked24h??'—';}
   function person(label,subtitle){const name=String(label||'Unknown');const initial=html(name.slice(0,1).toUpperCase());return `<div class="person"><div class="person-icon">${initial}</div><div><strong>${html(name)}</strong><small>${html(subtitle||'')}</small></div></div>`;}
   function renderOverview(){
@@ -53,7 +61,7 @@
   function renderLicenses(){
     $('license-total').textContent=state.total;
     const found=filteredLicenses();
-    $('license-rows').innerHTML=found.length?found.map(r=>`<tr><td>${person(r.customer,r.keyMasked)}<span class="mono">${html(r.plan)}</span></td><td>${html(r.lastName||'Belum aktivasi')}</td><td><span class="mono">${html(r.deviceId||'Not bound')}</span></td><td>${statusBadge(r.status)}</td><td>${html(relative(r.lastSeenAt))}</td><td>${html(day(r.expiresAt))}</td><td><button class="row-link" data-manage="${html(r.id)}">Manage →</button></td></tr>`).join(''):'<tr><td class="empty" colspan="7">Tidak ada lisensi yang cocok.</td></tr>';
+    $('license-rows').innerHTML=found.length?found.map(r=>`<tr><td>${person(r.customer,r.keyMasked)}<span class="mono">${html(r.tool||'tripo').toUpperCase()} · ${html(r.plan)}</span></td><td>${html(r.lastName||'Belum aktivasi')}</td><td><span class="mono">${html(r.deviceId||'Not bound')}</span></td><td>${statusBadge(r.status)}</td><td>${html(relative(r.lastSeenAt))}</td><td>${html(day(r.expiresAt))}</td><td><button class="row-link" data-manage="${html(r.id)}">Manage →</button></td></tr>`).join(''):'<tr><td class="empty" colspan="7">Tidak ada lisensi yang cocok.</td></tr>';
     $('license-range').textContent=`Menampilkan ${found.length} dari ${state.total} license${state.offset<state.total?' (sebagian data belum dimuat)':''}`;
     $('more-btn').classList.toggle('hidden',state.offset>=state.total);
   }
@@ -62,11 +70,11 @@
     $('event-total').textContent=state.events.length;
     const events=filteredEvents();
     const names={activated:'ACTIVATED',download:'DOWNLOAD',convert:'CONVERT',checked:'VERIFIED',rejected:'REJECTED',issued:'ISSUED',admin_update:'ADMIN UPDATE'};
-    $('event-rows').innerHTML=events.length?events.map(e=>`<tr><td><span class="status ${e.type==='rejected'?'revoked':e.type==='activated'?'':'expired'}">${html(names[e.type]||e.type)}</span></td><td>${html(e.display_name||'—')}</td><td>${html(e.customer||'Tidak ditemukan')}<small class="mono"> ··· ${html(e.license_key_tail||e.key_tail||'')}</small></td><td><span class="mono">${html(e.device_id||'—')}</span></td><td>${html(date(e.created_at))}</td><td>${html(e.description||'—')}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">Belum ada aktivitas yang cocok.</td></tr>';
+    $('event-rows').innerHTML=events.length?events.map(e=>`<tr><td><span class="status ${e.type==='rejected'?'revoked':e.type==='activated'?'':'expired'}">${html(names[e.type]||e.type)}</span><small class="mono"> ${html(e.tool_slug||'tripo')}</small></td><td>${html(e.display_name||'—')}</td><td>${html(e.customer||'Tidak ditemukan')}<small class="mono"> ··· ${html(e.license_key_tail||e.key_tail||'')}</small></td><td><span class="mono">${html(e.device_id||'—')}</span></td><td>${html(date(e.created_at))}</td><td>${html(e.description||'—')}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">Belum ada aktivitas yang cocok.</td></tr>';
   }
   function showManage(id){state.chosen=state.licenses.find(x=>x.id===id);if(!state.chosen)return;renderManage();showModal('manage-modal');}
   function renderManage(){const r=state.chosen;if(!r)return;$('manage-title').textContent=r.customer;
-    const details=[['License Key',r.keyMasked],['Status',r.status.toUpperCase()],['Last Username',r.lastName||'Belum aktivasi'],['Device ID',r.deviceId||'Belum di-bind'],['First Activated',date(r.activatedAt)],['Last Seen',date(r.lastSeenAt)],['Expiration',day(r.expiresAt)],['Total Checks',r.checkCount],['Plan',r.plan],['Created',date(r.createdAt)]];
+    const details=[['License Key',r.keyMasked],['Status',r.status.toUpperCase()],['Last Username',r.lastName||'Belum aktivasi'],['Device ID',r.deviceId||'Belum di-bind'],['First Activated',date(r.activatedAt)],['Last Seen',date(r.lastSeenAt)],['Expiration',day(r.expiresAt)],['Total Checks',r.checkCount],['Tool',(r.tool||'tripo').toUpperCase()],['Plan',r.plan],['Created',date(r.createdAt)]];
     $('manage-details').innerHTML=details.map(([name,value])=>`<div class="detail"><div class="detail-label">${html(name.toUpperCase())}</div><div class="detail-value">${html(value)}</div></div>`).join('');
     $('action-revoke').textContent=r.status==='revoked'?'Restore License':'Revoke License';$('action-revoke').className='btn '+(r.status==='revoked'?'btn-ghost':'btn-danger');
   }
@@ -101,12 +109,21 @@
     document.addEventListener('keydown',e=>{if(e.key==='Escape')hideModals();});
     $('create-form').addEventListener('submit',async e=>{
       e.preventDefault();const btn=$('create-submit');btn.disabled=true;
-      try{const days=$('create-days').value;const r=await api('/api/admin/licenses',{method:'POST',data:{customer:$('create-name').value,plan:$('create-plan').value,deviceId:$('create-device').value,days:days==='lifetime'?null:Number(days)}});
+      try{const days=$('create-days').value;const r=await api('/api/admin/licenses',{method:'POST',data:{customer:$('create-name').value,plan:$('create-plan').value,deviceId:$('create-device').value,tool:$('create-tool').value,days:days==='lifetime'?null:Number(days)}});
         state.issuedKey=r.key;$('issued-key').textContent=r.key;hideModals();showModal('key-modal');$('create-form').reset();await loadAll();notice('Key baru berhasil digenerate.');
       }catch(err){notice(err.message,true);}finally{btn.disabled=false;}
     });
     $('copy-issued').onclick=async()=>{try{await navigator.clipboard.writeText(state.issuedKey);notice('License key disalin.');}catch{notice('Gagal menyalin. Pilih key dan copy manual.',true);}};
     $('export-btn').onclick=()=>{location.href='/api/admin/export';};
+    $('store-form').addEventListener('submit',async e=>{
+      e.preventDefault();const button=$('save-store');button.disabled=true;
+      try {
+        const prices={};
+        ['tripo','meshy','sketchfab-textures','sketchfab-model'].forEach(t=>{const v=$('price-'+t).value.trim();prices[t]=v?Number(v):null;});
+        const result=await api('/api/admin/store',{method:'POST',data:{discordUrl:$('store-discord').value.trim(),whatsappNumber:$('store-whatsapp').value.trim(),note:$('store-note').value.trim(),prices}});
+        state.store=result.settings;renderStore();notice('Storefront berhasil diperbarui.');
+      }catch(err){notice(err.message,true);}finally{button.disabled=false;}
+    });
     $('action-bind').onclick=()=>{const id=prompt('Tempel Device ID (bmdev_...):',state.chosen?.deviceId||'bmdev_');if(id!==null)action('bind-device',{deviceId:id.trim()});};
     $('action-reset').onclick=()=>action('reset-device',{},'Reset binding perangkat? Perangkat lama harus validasi ulang dan key bisa diaktivasi pada perangkat baru.');
     $('action-expiry').onclick=()=>{const days=prompt('Durasi mulai sekarang dalam hari (1–3650), atau ketik lifetime:', '30');if(days===null)return;const n=days.trim().toLowerCase()==='lifetime'?null:Number(days);if(n!==null&&(!Number.isSafeInteger(n)||n<1||n>3650))return notice('Isi 1–3650 atau lifetime.',true);action('set-expiry',{days:n});};

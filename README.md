@@ -118,3 +118,14 @@ npm.cmd run check
 ```
 
 Pengujian lokal tanpa `DATABASE_URL` hanya memeriksa logika, instalasi userscript, wiring frontend, dan struktur project. Pengujian database dan website hidup membutuhkan deployment Neon/Vercel. Cek `/api/health` mengembalikan `database: "connected"` sesudah konfigurasi.
+
+
+## Storefront V13 (multi-tool, manual payment)
+- `/`: katalog empat produk bergambar, warna navy/cyan mengikuti referensi frontend obfuscator.
+- `/admin` → **Store Settings**: atur link Discord, WhatsApp format 62..., catatan pembayaran, harga IDR.
+- `/admin` → **License Manager** → New License: pilih tool; admin hanya menerbitkan key setelah pembayaran dibuktikan.
+- Tripo V12 client tetap bekerja: permintaan tanpa `tool` otomatis dianggap `tripo`.
+- Key baru terikat ke tool tertentu dan pertama kali aktivasi mengikat browser-device ID; ini bukan HWID hardware.
+- Integrasi Neon menjalankan `ALTER TABLE ... ADD COLUMN IF NOT EXISTS tool_slug` dan membuat tabel konfigurasi storefront otomatis. Bila awalnya Neon belum terhubung, storefront tampil dengan fallback tanpa kontak sampai disetel di Admin.
+- **Tidak ada payment gateway/konfirmasi otomatis**: WhatsApp/Discord hanya sarana order manual. Harga kosong = Tanya Admin. Kontak harus diatur admin sebelum tombol bisa diklik.
+- Toolkit Meshy/Sketchfab harus digunakan hanya untuk file sendiri atau aset yang memiliki hak unduh. Sistem ini tidak mencabut paywall atau izin aset pihak ketiga.
