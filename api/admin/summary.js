@@ -1,7 +1,9 @@
 import {apiHandler,method,http} from '../../lib/common.js';
 import {requireAdmin} from '../../lib/auth.js';
 import {setup,query} from '../../lib/store.js';
+import adminStoreRoute from '../../lib/routes/admin-store.js';
 export default apiHandler(async(req,res)=>{
+  if(req.query?.view==='store')return adminStoreRoute(req,res);
   if(!method(req,res,['GET']))return;
   if(!requireAdmin(req,res))return;
   await setup();

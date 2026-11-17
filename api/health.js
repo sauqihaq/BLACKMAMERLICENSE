@@ -1,6 +1,8 @@
 import {apiHandler,method,http} from '../lib/common.js';
 import {setup,query} from '../lib/store.js';
+import publicStoreRoute from '../lib/routes/public-store.js';
 export default apiHandler(async(req,res)=>{
+  if(req.query?.view==='store')return publicStoreRoute(req,res);
   if(!method(req,res,['GET']))return;
   await setup();
   const [{alive}]=await query('SELECT 1 AS alive');

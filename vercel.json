@@ -10,6 +10,18 @@
     {
       "source": "/admin",
       "destination": "/admin.html"
+    },
+    {
+      "source": "/api/store",
+      "destination": "/api/health?view=store"
+    },
+    {
+      "source": "/api/admin/store",
+      "destination": "/api/admin/summary?view=store"
+    },
+    {
+      "source": "/api/install-tool",
+      "destination": "/api/install"
     }
   ],
   "headers": [
@@ -63,10 +75,7 @@
   ],
   "functions": {
     "api/install.js": {
-      "includeFiles": "public/tripo-source.user.js"
-    },
-    "api/install-tool.js": {
-      "includeFiles": "public/tool-client-template.user.js"
+      "includeFiles": "public/*.user.js"
     }
   }
 }

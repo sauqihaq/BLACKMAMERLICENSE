@@ -1,7 +1,9 @@
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {apiHandler,method,error} from '../lib/common.js';
+import installToolRoute from '../lib/routes/install-tool.js';
 export default apiHandler(async(req,res)=>{
+  if(req.query?.tool)return installToolRoute(req,res);
   if(!method(req,res,['GET']))return;
   const host=String(req.headers.host||'').toLowerCase();
   if(!/^(?:[a-z0-9-]+\.)*[a-z0-9-]+(?::\d{1,5})?$/.test(host))return error(res,400,'BAD_HOST','Host tidak valid.');
