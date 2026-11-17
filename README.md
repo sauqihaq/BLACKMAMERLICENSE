@@ -138,3 +138,28 @@ Pengujian lokal tanpa `DATABASE_URL` hanya memeriksa logika, instalasi userscrip
 - /api/install-tool?tool=sketchfab-model — licensed source-file workflow for Sketchfab pages.
 - These V13 kits require online license activation per product; client-side checks are tamperable and do **not** unlock paid platform assets.
 - For non-Tripo kits, users can paste a **permitted** HTTPS download link or select a local GLB file to export embedded PNG textures. They are not clones of the earlier viewer-ripping / paywall-bypass scripts.
+
+
+## V14 — Private delivery & BlackMamer extension
+
+- Admin → Script & Install Links: upload a .user.js file (max 1 MB), choose a paid license, and set an exact link expiry date/time. Links are single-browser claims. Retries with the same installation proof are idempotent.
+- Newly uploaded source is AES-256-GCM encrypted in Neon, not saved to public files or this repository. Source snapshots are immutable; existing links keep their selected version. Never commit private customer scripts.
+- Link tokens are random 256-bit bearer tokens. Only SHA-256 hashes are stored. Links use URL fragments, no-referrer, and POST requests. Full URLs are shown once to admin. Reissue a new link if lost; revoke old links explicitly.
+- Redeeming atomically binds the license and link to one extension browser identity. A redeemed session follows the license expiry, not the original link expiry. Revoking the link or license invalidates that session. Reset Device invalidates the old session until re-bound; revoke old claimed links before transferring to a different owner.
+- `/install` checks extension availability and opens an extension confirmation page. The website receives status only; the extension fetches and installs code after user confirmation.
+- Purchased scripts do not have editor/source/export controls. Personal scripts retain editing/import/export. Client code still exists on the buyer's machine; this does not provide impossible-to-extract code or hardware-backed DRM. Previously public scripts and Git history cannot be made secret retroactively.
+- The legacy public installers remain for existing key-based customers. New private uploads never use those routes. `Use existing template` copies the existing already-public kit into private delivery, with automatic license session setup in the extension.
+
+### Deployment settings
+
+Existing DATABASE_URL and admin environment variables remain required. New tables are created additively. Prefer a separate long random `SCRIPT_ENCRYPTION_KEY` (32+ characters). If absent, ADMIN_SESSION_SECRET is used; changing the active encryption/signing secret invalidates sessions and makes old encrypted script snapshots unreadable. Preserve the key securely.
+
+`PUBLIC_BASE_URL=https://blackmamerlicense.vercel.app` configures template URLs. Set `CHROME_WEB_STORE_URL` only after an approved store listing exists. Until then the website states that one-click Web Store installation is unavailable. `EXTENSION_DOWNLOAD_AVAILABLE=true` enables the development ZIP link only after a ZIP is placed in public/downloads/BlackMamer-v4.zip. No store listing is invented and no silent-install bypass is used.
+
+Payment confirmation remains manual, as in the current store. After payment, issue the license and an install link from admin; sending script files is no longer necessary. Full payment automation would require a chosen payment gateway and verified payment webhooks.
+
+### Verification
+
+Run `npm ci` and `npm test` using Node 22.3 or later (module-mocking support). The suite includes an in-memory PostgreSQL engine for encrypted uploads, snapshot versions, claim retries, expiry, license/device revocation and admin authentication. Its single database connection cannot reproduce all multi-connection production races; first-use device binding remains a conditional SQL update under a row lock.
+
+Local Chrome integration was also checked with a separate test extension copy and test database: authenticated admin upload, user-selected expiry, link generation, website detection, explicit installation confirmation, licensed/personal script execution, editor/export separation and denial after revocation. This is local validation, not evidence of a production deployment or Web Store approval.

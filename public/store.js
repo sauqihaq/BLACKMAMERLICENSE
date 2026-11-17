@@ -14,7 +14,7 @@ $('cards').innerHTML=catalog.map((t,i)=>'<article class="card"><div class="card-
 document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>openBuy(b.dataset.buy));
 }
 function openBuy(slug){selected=catalog.find(t=>t.slug===slug);if(!selected)return;
-$('buy-install').href=selected.slug==='tripo'?'/api/install':'/api/install-tool?tool='+encodeURIComponent(selected.slug);
+$('buy-install').href='/extension';
 $('buy-image').src=selected.image;$('buy-title').textContent=selected.name;$('buy-desc').textContent=selected.description;$('buy-price').textContent=money(selected.price);
 $('buy-wa').disabled=!contacts.whatsappNumber;$('buy-discord').disabled=!contacts.discordUrl;
 $('buy-help').textContent=(!contacts.whatsappNumber&&!contacts.discordUrl)?'Kontak admin belum dikonfigurasi. Silakan hubungi pemilik website.':(contacts.note||'Admin akan memberikan instruksi pembayaran. License dibuat setelah pembayaran diverifikasi.');

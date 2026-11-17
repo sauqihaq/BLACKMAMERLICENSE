@@ -1,0 +1,8 @@
+/* Shared neutral palette with BlackMamer Script Studio. */
+:root{--bg:#111113;--surface:#19191c;--surface2:#232126;--stroke:#343039;--stroke2:#4b424c;--fg:#ecebef;--muted:#aba4b0;--soft:#d1c5cc;--silver:#cc7d86;--green:#93b79e}
+body{background:#111113}.ambient-glow{display:none}.sidebar{background:#171719;border-color:#302c34}.topbar{background:#171719;border-color:#302c34}
+.auth-card,.modal,.metric,.panel{background:#1a191d;border-color:#343039}.brand-icon,.auth-mark{background:#292126;border-color:#75515b;box-shadow:none}.brand strong span,.dot,.eyebrow{color:#d38b94}
+.nav-item.active,.nav-item:hover{background:#302329;border-color:#50353f;color:#f0dbe0}.btn-primary{background:#ad4e59;color:#fff;box-shadow:none;border-color:#c4737c}.btn-ghost{background:#27232a;border-color:#514650;color:#e2d6df}
+.form-stack input,.form-stack select,.search,.toolbar select{background:#121115;border-color:#48414b;color:#ece6ef}.form-stack input:focus,.form-stack select:focus,.search:focus{border-color:#ce8791;box-shadow:0 0 0 3px #ce87911c}
+.metric-value,.brand strong{color:#f0ebf2}.person-icon,.avatar{background:#382a32;border-color:#735361}.row-link{color:#d99ca7}.store-form-divider{color:#ce8992;border-color:#4b3540}.store-preview article,.store-guide{background:#221d23;border-color:#49343e}.store-preview small,.store-guide strong{color:#d49ba5}.store-guide p{color:#bcb0bf}
+.delivery-row{flex-wrap:wrap}.delivery-row span{min-width:160px}.form-stack label{font-size:11px}.nav-item{font-size:13px}.section-heading p,.panel p{line-height:1.7}

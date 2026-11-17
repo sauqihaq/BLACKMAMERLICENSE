@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const viewNames = {overview:'Overview',licenses:'License Manager',activity:'Activity Logs',store:'Store Settings',security:'Security & Info'};
+  const viewNames = {overview:'Overview',licenses:'License Manager',activity:'Activity Logs',store:'Store Settings',security:'Security & Info',delivery:'Scripts & Install Links'};
   const state = {licenses:[],events:[],summary:null,total:0,loading:false,chosen:null,issuedKey:'',tab:'overview',offset:0,limit:250};
   const html = value => String(value??'').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const date = value => value ? new Date(value).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}) : '—';

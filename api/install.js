@@ -2,7 +2,9 @@ import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {apiHandler,method,error} from '../lib/common.js';
 import installToolRoute from '../lib/routes/install-tool.js';
+import deliveryRoute from '../lib/routes/delivery.js';
 export default apiHandler(async(req,res)=>{
+  if(req.query?.view==='delivery')return deliveryRoute(req,res);
   if(req.query?.tool)return installToolRoute(req,res);
   if(!method(req,res,['GET']))return;
   const host=String(req.headers.host||'').toLowerCase();
