@@ -1,6 +1,7 @@
 import {apiHandler,body,method,http,error,cleanName,allowedPlans,createId,newKey,keyHash,DEVICE_REGEX,publicLicense} from '../../lib/common.js';
 import {requireAdmin} from '../../lib/auth.js';
 import {setup,query,audit} from '../../lib/store.js';
+import {isTool} from '../../lib/catalog.js';
 export default apiHandler(async(req,res)=>{
   if(!method(req,res,['GET','POST']))return;
   if(!requireAdmin(req,res,{mutate:req.method==='POST'}))return;
@@ -14,16 +15,17 @@ export default apiHandler(async(req,res)=>{
   }
   const b=body(req);
   const customer=cleanName(b.customer,100);
+  const tool=String(b.tool||'tripo');
   const plan=String(b.plan||'Personal');
   const deviceId=String(b.deviceId||'').trim();
   const days=b.days===null||b.days===''?null:Number(b.days);
-  if(!customer||!allowedPlans.includes(plan)|| (deviceId&&!DEVICE_REGEX.test(deviceId)) || (days!==null&&(!Number.isSafeInteger(days)||days<1||days>3650)))
+  if(!customer||!isTool(tool)||!allowedPlans.includes(plan)|| (deviceId&&!DEVICE_REGEX.test(deviceId)) || (days!==null&&(!Number.isSafeInteger(days)||days<1||days>3650)))
     return error(res,400,'INVALID_INPUT','Nama, paket, Device ID, atau masa aktif tidak valid.');
-  const key=newKey();
+  const key=newKey(tool);
   const id=createId();
   const expires=days===null?null:new Date(Date.now()+days*86400000).toISOString();
-  const [r]=await query(`INSERT INTO bm_tripo_licenses(id,key_hash,key_tail,customer,plan,status,device_id,expires_at)
-    VALUES($1,$2,$3,$4,$5,'active',$6,$7) RETURNING *`,[id,keyHash(key),key.slice(-5),customer,plan,deviceId||null,expires]);
-  await audit({licenseId:id,type:'issued',keyTail:r.key_tail,description:`Admin membuat license untuk ${customer}`});
+  const [r]=await query(`INSERT INTO bm_tripo_licenses(id,key_hash,key_tail,customer,plan,status,device_id,expires_at,tool_slug)
+    VALUES($1,$2,$3,$4,$5,'active',$6,$7,$8) RETURNING *`,[id,keyHash(key),key.slice(-5),customer,plan,deviceId||null,expires,tool]);
+  await audit({licenseId:id,type:'issued',keyTail:r.key_tail,description:`Admin membuat license ${tool} untuk ${customer}`,toolSlug:tool});
   http(res,201,{ok:true,key,license:publicLicense(r),warning:'License key hanya muncul sekali. Simpan sekarang.'});
 });

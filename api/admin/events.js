@@ -7,7 +7,7 @@ export default apiHandler(async(req,res)=>{
   await setup();
   const limit=Math.min(500,Math.max(1,Number(req.query?.limit)||100));
   const rows=await query(`SELECT e.id,e.type,e.display_name,e.device_id,e.key_tail,e.description,
-      e.created_at,l.customer,l.plan,l.key_tail AS license_key_tail
+      e.created_at,l.customer,l.plan,l.key_tail AS license_key_tail,COALESCE(e.tool_slug,l.tool_slug,'tripo') AS tool_slug
       FROM bm_tripo_events e LEFT JOIN bm_tripo_licenses l ON l.id=e.license_id
       ORDER BY e.id DESC LIMIT $1`,[limit]);
   http(res,200,{ok:true,events:rows});
