@@ -1,0 +1,19 @@
+import {readFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {apiHandler,method,error} from '../lib/common.js';
+export default apiHandler(async(req,res)=>{
+  if(!method(req,res,['GET']))return;
+  const host=String(req.headers.host||'').toLowerCase();
+  if(!/^(?:[a-z0-9-]+\.)*[a-z0-9-]+(?::\d{1,5})?$/.test(host))return error(res,400,'BAD_HOST','Host tidak valid.');
+  const protocol=host.startsWith('localhost:')||host.startsWith('127.0.0.1:')?'http':'https';
+  const origin=`${protocol}://${host}`;
+  const source=await readFile(join(process.cwd(),'public','tripo-source.user.js'),'utf8');
+  const configured=source.replace('https://GANTI-PROJECT.vercel.app',origin);
+  if(configured===source)throw Error('Template userscript tidak ditemukan.');
+  res.statusCode=200;
+  res.setHeader('Content-Type','text/javascript; charset=utf-8');
+  res.setHeader('Content-Disposition','attachment; filename="BlackMamer_Tripo_V12_AutoConfigured.user.js"');
+  res.setHeader('Cache-Control','no-store');
+  res.setHeader('X-Content-Type-Options','nosniff');
+  res.end(configured);
+});
