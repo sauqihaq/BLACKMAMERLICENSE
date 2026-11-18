@@ -20,3 +20,18 @@ body{background:#111113}.ambient-glow{display:none}.sidebar{background:#171719;b
 .discount-editor-grid input:focus{outline:2px solid #ad667c;outline-offset:1px}
 .discount-preview{font-size:11px;color:#e1aab8;margin-top:15px;padding:10px 12px;background:#291e27;border-radius:8px;line-height:1.7;overflow-wrap:anywhere}
 @media(max-width:500px){.discount-editor-grid{grid-template-columns:1fr}.discount-editor-grid label:last-child{grid-column:auto}}
+
+/* Product management — same BlackMamer rose / silver theme */
+.product-manager-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0}
+.product-manager-actions p{font-size:11px;margin:0;flex:1;min-width:190px}
+.product-editor{background:#201a21;border:1px solid #674251;padding:20px;border-radius:13px;margin:18px 0 22px}
+.product-editor-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.product-editor-heading h3{font-size:16px;margin:0;color:#f1dce4}
+.product-editor .form-stack{margin-top:16px;gap:13px}
+.product-editor .form-stack textarea{width:100%;display:block;margin-top:9px;background:#121115;border:1px solid #48414b;border-radius:9px;color:#ece6ef;padding:13px;resize:vertical;min-height:84px;font:inherit;font-size:13px;outline:none}
+.product-editor .form-stack textarea:focus{border-color:#ce8791;box-shadow:0 0 0 3px #ce87911c}
+.product-editor .form-stack input[readonly]{opacity:.72;cursor:not-allowed}
+.product-editor-note{font-size:11px!important;color:#aa96a3!important;line-height:1.65;margin:0!important}
+.store-preview .product-card-edit{display:flex;gap:9px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.store-preview .product-card-edit button{flex:1;min-width:85px}
+.store-preview .product-card-slug{font-size:9px;letter-spacing:.04em;color:#9d8392;overflow-wrap:anywhere}

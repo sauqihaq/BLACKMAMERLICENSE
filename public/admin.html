@@ -51,7 +51,34 @@
       <p class="store-promo-note">Atur harga normal dan diskon 0–90% untuk setiap produk. Diskon 0% = tanpa promo. Tanggal akhir opsional; jika diisi, harga normal otomatis berlaku lagi setelah promo berakhir.</p>
       <div id="store-price-fields"></div>
       <button class="btn btn-primary" id="save-store" type="submit">Save Store Settings →</button></form></section>
-      <section class="panel"><h2>Product Catalog</h2><p>Produk dari katalog dan produk custom akan ditampilkan di sini. Harga kosong = Tanya Admin. Diskon ditampilkan hanya selama promo berlaku.</p><div id="store-product-preview" class="store-preview"></div>
+      <section class="panel"><h2>Product Catalog</h2><p>Kelola nama, gambar, dan tambah produk langsung di sini. Harga dan diskon bisa diatur di panel sebelah.</p>
+<div class="product-manager-actions">
+ <button class="btn btn-primary btn-small" id="product-create-open" type="button">+ Tambah Produk</button>
+ <p>Ubah nama dan gambar tanpa mengubah lisensi yang sudah ada.</p>
+</div>
+<div id="product-create-box" class="product-editor hidden">
+ <div class="product-editor-heading"><h3>Tambah Produk Baru</h3><button class="btn btn-ghost btn-small" id="product-create-close" type="button">Batal</button></div>
+ <form class="form-stack" id="product-create-form">
+  <label>NAMA PRODUK<input id="new-product-name" maxlength="120" minlength="2" placeholder="Contoh: BLACKMAMER AI Blender" required></label>
+  <label>PRODUCT ID / SLUG<input id="new-product-slug" maxlength="36" pattern="[a-z][a-z0-9-]{2,35}" placeholder="blackmamer-blender" required></label>
+  <p class="product-editor-note">ID unik dipakai untuk menghubungkan script dan license. Setelah dibuat, ID tidak dapat diganti.</p>
+  <label>DESKRIPSI PRODUK<textarea id="new-product-description" maxlength="500" rows="3" placeholder="Penjelasan singkat produk"></textarea></label>
+  <label>GAMBAR PRODUK<select id="new-product-image"><option value="/assets/tripo.svg">3D Cube</option><option value="/assets/meshy.svg">3D Mesh</option><option value="/assets/textures.svg">Texture</option><option value="/assets/sketchfab.svg">3D Model</option></select></label>
+  <button class="btn btn-primary" type="submit" id="new-product-save">+ Simpan Produk</button>
+ </form>
+</div>
+<div id="product-edit-box" class="product-editor hidden">
+ <div class="product-editor-heading"><h3>Edit Produk</h3><button class="btn btn-ghost btn-small" id="product-edit-close" type="button">Batal</button></div>
+ <form class="form-stack" id="product-edit-form">
+  <label>PRODUCT ID (TIDAK BERUBAH)<input id="edit-product-slug" readonly></label>
+  <label>NAMA PRODUK<input id="edit-product-name" maxlength="120" minlength="2" required></label>
+  <label>DESKRIPSI PRODUK<textarea id="edit-product-description" maxlength="500" rows="3"></textarea></label>
+  <label>GAMBAR PRODUK<select id="edit-product-image"><option value="/assets/tripo.svg">3D Cube</option><option value="/assets/meshy.svg">3D Mesh</option><option value="/assets/textures.svg">Texture</option><option value="/assets/sketchfab.svg">3D Model</option></select></label>
+  <p class="product-editor-note">Nama dan gambar berubah di website. Script, harga, diskon, dan lisensi tetap terkait dengan Product ID yang sama.</p>
+  <button class="btn btn-primary" type="submit" id="edit-product-save">Simpan Perubahan</button>
+ </form>
+</div>
+<div id="store-product-preview" class="store-preview"></div>
 <div class="store-guide"><strong>Manual Payment Workflow</strong><p>1. Pembeli pilih tool dan klik kontak.<br>2. Kamu verifikasi pembayaran lewat Discord/WA.<br>3. Buka Produk & Akses, pilih produk dan username.<br>4. Kirim link install privat tanpa key manual.</p><p>Catatan: key tidak otomatis terbit ketika pengguna hanya menghubungi admin. Validasi perangkat tetap berjalan di Vercel.</p></div></section></div>
       </section>
       <section class="tab hidden" id="tab-security"><div class="section-heading"><div class="eyebrow">BLACKMAMER CONTROL / 04</div><h1>Security & Info<span class="dot">.</span></h1><p>Pengaturan keamanan dan cara kerja proteksi license.</p></div><div class="two-panels info-panels"><article class="panel"><h2>License Enforcement</h2><p>Validasi berjalan di server Vercel. Aktivasi pertama mengikat key ke satu Device ID browser. Reset Device tersedia di halaman License Manager.</p><div class="setting-line"><span>Online verification</span><strong>ENABLED</strong></div><div class="setting-line"><span>Admin session</span><strong>HTTP-ONLY COOKIE</strong></div><div class="setting-line"><span>License storage</span><strong>SHA-256 HASH</strong></div><div class="setting-line"><span>Database</span><strong>NEON POSTGRES</strong></div><p><a class="btn btn-primary" href="/api/install">↓ Install Tripo3D</a></p><p><a class="btn btn-ghost" href="/api/install-tool?tool=meshy">↓ Install Meshy Kit</a></p><p><a class="btn btn-ghost" href="/api/install-tool?tool=sketchfab-textures">↓ Install Sketchfab Textures</a></p><p><a class="btn btn-ghost" href="/api/install-tool?tool=sketchfab-model">↓ Install Sketchfab Model</a></p></article><article class="panel"><h2>Informasi penting</h2><p>Nama pengguna yang ditampilkan berasal dari isian ketika aktivasi, bukan identitas yang diverifikasi oleh Tripo3D. Device ID bukan serial hardware Windows dan masih dapat disalin atau dipalsukan.</p><p>Jika lisensi di-revoke, validasi berikutnya gagal. Userscript yang berada di perangkat pelanggan tetap dapat dimodifikasi; jangan anggap pemeriksaan di sisi browser mustahil dilewati.</p><p>Rahasia admin diatur hanya melalui Environment Variables proyek Vercel. Jangan pernah meletakkannya di frontend.</p></article></div></section>
@@ -61,6 +88,6 @@
 </div>
 <div id="manage-modal" class="modal-cover hidden"><div class="modal manage" role="dialog" aria-modal="true" aria-labelledby="manage-title"><div class="modal-head"><div class="eyebrow">MANAGE LICENSE</div><button class="icon-button" data-close-modal>✕</button></div><h2 id="manage-title">License details</h2><div id="manage-details" class="detail-grid"></div><div class="manage-actions"><button id="action-bind" class="btn btn-ghost">Bind Device ID</button><button id="action-reset" class="btn btn-ghost">Reset Device</button><button id="action-expiry" class="btn btn-ghost">Change Expiry</button><button id="action-rename" class="btn btn-ghost">Rename Owner</button><button id="action-revoke" class="btn btn-danger">Revoke License</button></div></div></div>
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
-<script src="/admin.js?v=21" defer></script>
+<script src="/admin.js?v=22" defer></script>
 <script src="/admin-delivery.js?v=20" defer></script>
 </body></html>

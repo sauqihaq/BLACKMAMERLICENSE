@@ -29,7 +29,7 @@
  async function load(preferred=''){
   const r=await api('/api/admin/delivery');products=r.products;scripts=r.scripts;
   const selector=$('#delivery-tool'),previous=preferred||selector.value;selector.replaceChildren(el('option','— Pilih produk yang benar —'));selector.firstChild.value='';
-  for(const p of products){const o=el('option',p.name+(p.active?'':' · hidden'));o.value=p.slug;selector.append(o);}
+  for(const p of products){const o=el('option',p.name+' ('+p.slug+')'+(p.active?'':' · hidden'));o.value=p.slug;selector.append(o);}
   if(products.some(p=>p.slug===previous))selector.value=previous;
   refreshProduct();
   $('#delivery-links').replaceChildren(...r.links.map(l=>{

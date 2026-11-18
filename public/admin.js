@@ -92,8 +92,32 @@
       const card=document.createElement('article'),img=document.createElement('img'),name=document.createElement('b'),tag=document.createElement('small');
       img.src=p.image;img.alt=p.name;name.textContent=p.name;
       tag.textContent=(p.discount_percent>0?'DISKON -'+p.discount_percent+'% · ':'')+(p.active?'PUBLISHED':'HIDDEN');
-      card.append(img,name,tag);preview.append(card);
+      const slug=document.createElement('small');slug.className='product-card-slug';slug.textContent=p.slug;
+      const actions=document.createElement('div');actions.className='product-card-edit';
+      const edit=document.createElement('button');edit.type='button';edit.className='btn btn-ghost btn-small';
+      edit.dataset.editProduct=p.slug;edit.textContent='✎ Edit nama / gambar';
+      actions.append(edit);card.append(img,name,slug,tag,actions);preview.append(card);
     }
+  }
+
+  function showProductPanel(which){
+    $('product-create-box').classList.toggle('hidden',which!=='create');
+    $('product-edit-box').classList.toggle('hidden',which!=='edit');
+    if(which==='create')$('new-product-name').focus();
+    if(which==='edit')$('edit-product-name').focus();
+  }
+  function openProductEdit(slug){
+    const p=(state.products||[]).find(product=>product.slug===slug);
+    if(!p)return notice('Produk tidak ditemukan.',true);
+    $('edit-product-slug').value=p.slug;
+    $('edit-product-name').value=p.name||'';
+    $('edit-product-description').value=p.description||'';
+    $('edit-product-image').value=p.image||'/assets/tripo.svg';
+    showProductPanel('edit');
+    $('product-edit-box').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  function freshProductSlug(name){
+    return String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-').slice(0,36);
   }
   function renderStats(){const s=state.summary||{};$('stat-total').textContent=s.total??'—';$('stat-active').textContent=s.active??'—';$('stat-online').textContent=s.online24h??'—';$('stat-blocked').textContent=s.blocked24h??'—';}
   function person(label,subtitle){const name=String(label||'Unknown');const initial=html(name.slice(0,1).toUpperCase());return `<div class="person"><div class="person-icon">${initial}</div><div><strong>${html(name)}</strong><small>${html(subtitle||'')}</small></div></div>`;}
@@ -153,6 +177,47 @@
     });
     document.querySelectorAll('.modal-cover').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)hideModals();}));
     document.addEventListener('keydown',e=>{if(e.key==='Escape')hideModals();});
+
+    $('product-create-open').onclick=()=>showProductPanel('create');
+    $('product-create-close').onclick=()=>showProductPanel('');
+    $('product-edit-close').onclick=()=>showProductPanel('');
+    $('new-product-name').oninput=()=>{
+      const slug=$('new-product-slug');if(slug.dataset.manual==='1')return;
+      slug.value=freshProductSlug($('new-product-name').value);
+    };
+    $('new-product-slug').oninput=()=>{$('new-product-slug').dataset.manual='1';};
+    $('store-product-preview').addEventListener('click',event=>{
+      const edit=event.target.closest('[data-edit-product]');
+      if(edit)openProductEdit(edit.dataset.editProduct);
+    });
+    $('product-create-form').addEventListener('submit',async event=>{
+      event.preventDefault();const btn=$('new-product-save');btn.disabled=true;
+      try{
+        const result=await api('/api/admin/delivery',{method:'POST',data:{
+          action:'create-product',name:$('new-product-name').value.trim(),
+          slug:$('new-product-slug').value.trim(),description:$('new-product-description').value.trim(),
+          image:$('new-product-image').value
+        }});
+        $('product-create-form').reset();$('new-product-slug').dataset.manual='';
+        showProductPanel('');
+        await loadAll();
+        notice('Produk '+result.product.name+' berhasil ditambahkan. Atur harga /day dan upload script dari Produk & Akses.');
+      }catch(e){notice(e.message,true);}finally{btn.disabled=false;}
+    });
+    $('product-edit-form').addEventListener('submit',async event=>{
+      event.preventDefault();const btn=$('edit-product-save');btn.disabled=true;
+      try{
+        const result=await api('/api/admin/delivery',{method:'POST',data:{
+          action:'update-product',tool:$('edit-product-slug').value,
+          name:$('edit-product-name').value.trim(),
+          description:$('edit-product-description').value.trim(),
+          image:$('edit-product-image').value
+        }});
+        showProductPanel('');
+        await loadAll();
+        notice('Nama dan tampilan produk '+result.product.name+' berhasil diperbarui.');
+      }catch(e){notice(e.message,true);}finally{btn.disabled=false;}
+    });
     $('export-btn').onclick=()=>{location.href='/api/admin/export';};
     $('store-form').addEventListener('submit',async e=>{
       e.preventDefault();const button=$('save-store');button.disabled=true;
