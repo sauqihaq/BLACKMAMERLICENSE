@@ -4,7 +4,7 @@ const defaultCatalog=[
 {slug:'tripo',name:'Tripo3D Studio',eyebrow:'MODEL · CONVERTER',description:'Manajemen file 3D dan konversi lokal untuk aset yang dimiliki atau diizinkan.',features:['GLB / GLTF','Konversi lokal','Browser extension'],image:'/assets/tripo.svg'},
 {slug:'meshy',name:'Meshy 3D Tools',eyebrow:'WORKFLOW · 3D',description:'Workflow file dan model yang kamu miliki; tidak membuka paywall.',features:['Model milik sendiri','GLB tools','Device ID'],image:'/assets/meshy.svg'},
 {slug:'sketchfab-textures',name:'Sketchfab Texture Kit',eyebrow:'TEXTURE · MATERIALS',description:'Ekstrak tekstur dari GLB milikmu atau aset yang boleh diunduh.',features:['Texture PNG','GLB lokal','Material workflow'],image:'/assets/textures.svg'},
-{slug:'sketchfab-model',name:'Sketchfab Model Kit',eyebrow:'MODEL · LIBRARY',description:'Workflow model dari aset berizin dan sumber download resmi.',features:['Asset berizin','GLB import','Device ID'],image:'/assets/sketchfab.svg'}];
+{slug:'sketchfab-model',name:'BLACKMAMERSTUDIO | Model Tools',eyebrow:'SKETCHFAB · MODEL TOOLS',description:'Tools Sketchfab untuk ekspor GLB / FBX, material PBR, dan klip animasi dari konten berizin.',features:['GLB / FBX','PBR textures','Animation tools'],image:'/assets/sketchfab.svg'}];
 const $=id=>document.getElementById(id);
 let catalog=defaultCatalog.map(t=>({...t,price:null})),contacts={discordUrl:'',whatsappNumber:'',note:''},selected=null;
 const money=n=>n==null?'Tanya Admin':new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n);
