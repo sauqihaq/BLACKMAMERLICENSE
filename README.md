@@ -154,7 +154,7 @@ Pengujian lokal tanpa `DATABASE_URL` hanya memeriksa logika, instalasi userscrip
 
 Existing DATABASE_URL and admin environment variables remain required. New tables are created additively. Prefer a separate long random `SCRIPT_ENCRYPTION_KEY` (32+ characters). If absent, ADMIN_SESSION_SECRET is used; changing the active encryption/signing secret invalidates sessions and makes old encrypted script snapshots unreadable. Preserve the key securely.
 
-`PUBLIC_BASE_URL=https://blackmamerlicense.vercel.app` configures template URLs. Set `CHROME_WEB_STORE_URL` only after an approved store listing exists. Until then the website states that one-click Web Store installation is unavailable. `EXTENSION_DOWNLOAD_AVAILABLE=true` enables the development ZIP link only after a ZIP is placed in public/downloads/BlackMamer-v4.zip. No store listing is invented and no silent-install bypass is used.
+The Chrome desktop installation page at /extension serves the release ZIP from public/downloads/BlackMamer-v4.zip and explains how to load the extracted folder. PUBLIC_BASE_URL configures the origin used by legacy script templates.
 
 Payment confirmation remains manual, as in the current store. After payment, issue the license and an install link from admin; sending script files is no longer necessary. Full payment automation would require a chosen payment gateway and verified payment webhooks.
 
