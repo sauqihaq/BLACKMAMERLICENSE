@@ -21,7 +21,7 @@
   function unlock(){$('auth-screen').classList.add('hidden');$('shell').classList.remove('hidden');}
   function tab(name){if(!viewNames[name])return;state.tab=name;for(const key of Object.keys(viewNames))$('tab-'+key).classList.toggle('hidden',key!==name);document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.classList.contains('nav-item')&&b.dataset.tab===name));$('current-section').textContent=viewNames[name];window.scrollTo({top:0,behavior:'instant'});}
   function showModal(name){$(name).classList.remove('hidden');}
-  function hideModals(){for(const id of ['create-modal','key-modal','manage-modal'])$(id).classList.add('hidden');}
+  function hideModals(){for(const id of ['manage-modal'])$(id)?.classList.add('hidden');}
   async function loadAll(){
     if(state.loading)return;
     state.loading=true;const btn=$('refresh-btn');btn.disabled=true;
@@ -32,7 +32,7 @@
         api('/api/admin/events?limit=500'),
         api('/api/admin/store')
       ]);
-      state.summary=summary.summary;state.licenses=lic.licenses;state.total=lic.total;state.offset=state.licenses.length;state.events=log.events;state.store=store.settings;
+      state.summary=summary.summary;state.licenses=lic.licenses;state.total=lic.total;state.offset=state.licenses.length;state.events=log.events;state.store=store.settings;state.products=store.products||[];
       render();renderStore();
     }catch(err){notice(err.message,true);}
     finally{state.loading=false;btn.disabled=false;}
@@ -47,7 +47,18 @@
     $('store-discord').value=s.discord_url||'';
     $('store-whatsapp').value=s.whatsapp_number?'https://wa.me/'+s.whatsapp_number:'';
     $('store-note').value=s.contact_note||'';
-    ['tripo','meshy','sketchfab-textures','sketchfab-model'].forEach(t=>$('price-'+t).value=s.prices?.[t]??'');
+    const fields=$('store-price-fields'),preview=$('store-product-preview');
+    fields.replaceChildren();preview.replaceChildren();
+    for(const p of state.products||[]){
+      const label=document.createElement('label');label.textContent=p.name+' · Rp/day';
+      const input=document.createElement('input');
+      input.type='number';input.min='1000';input.max='100000000';input.step='1000';input.placeholder='Contoh: 50000 / day';
+      input.dataset.priceTool=p.slug;input.value=p.price_daily??s.prices?.[p.slug]??'';
+      label.append(input);fields.append(label);
+      const card=document.createElement('article'),img=document.createElement('img'),name=document.createElement('b'),tag=document.createElement('small');
+      img.src=p.image;img.alt=p.name;name.textContent=p.name;tag.textContent=p.active?'PUBLISHED':'HIDDEN';
+      card.append(img,name,tag);preview.append(card);
+    }
   }
   function renderStats(){const s=state.summary||{};$('stat-total').textContent=s.total??'—';$('stat-active').textContent=s.active??'—';$('stat-online').textContent=s.online24h??'—';$('stat-blocked').textContent=s.blocked24h??'—';}
   function person(label,subtitle){const name=String(label||'Unknown');const initial=html(name.slice(0,1).toUpperCase());return `<div class="person"><div class="person-icon">${initial}</div><div><strong>${html(name)}</strong><small>${html(subtitle||'')}</small></div></div>`;}
@@ -98,30 +109,23 @@
     for(const id of ['license-search','license-filter'])$(id).addEventListener('input',renderLicenses);
     for(const id of ['event-search','event-filter'])$(id).addEventListener('input',renderEvents);
     document.addEventListener('click',e=>{
-      const t=e.target.closest('[data-tab],[data-open-create],[data-close-modal],[data-manage]');
+      const t=e.target.closest('[data-tab],[data-open-delivery],[data-close-modal],[data-manage]');
       if(!t)return;
       if(t.dataset.tab)tab(t.dataset.tab);
-      if(t.hasAttribute('data-open-create'))showModal('create-modal');
+      if(t.hasAttribute('data-open-delivery'))document.querySelector('.nav-item[data-tab="delivery"]')?.click();
       if(t.hasAttribute('data-close-modal'))hideModals();
       if(t.dataset.manage)showManage(t.dataset.manage);
     });
     document.querySelectorAll('.modal-cover').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)hideModals();}));
     document.addEventListener('keydown',e=>{if(e.key==='Escape')hideModals();});
-    $('create-form').addEventListener('submit',async e=>{
-      e.preventDefault();const btn=$('create-submit');btn.disabled=true;
-      try{const days=$('create-days').value;const r=await api('/api/admin/licenses',{method:'POST',data:{customer:$('create-name').value,plan:$('create-plan').value,deviceId:$('create-device').value,tool:$('create-tool').value,days:days==='lifetime'?null:Number(days)}});
-        state.issuedKey=r.key;$('issued-key').textContent=r.key;hideModals();showModal('key-modal');$('create-form').reset();await loadAll();notice('Key baru berhasil digenerate.');
-      }catch(err){notice(err.message,true);}finally{btn.disabled=false;}
-    });
-    $('copy-issued').onclick=async()=>{try{await navigator.clipboard.writeText(state.issuedKey);notice('License key disalin.');}catch{notice('Gagal menyalin. Pilih key dan copy manual.',true);}};
     $('export-btn').onclick=()=>{location.href='/api/admin/export';};
     $('store-form').addEventListener('submit',async e=>{
       e.preventDefault();const button=$('save-store');button.disabled=true;
       try {
         const prices={};
-        ['tripo','meshy','sketchfab-textures','sketchfab-model'].forEach(t=>{const v=$('price-'+t).value.trim();prices[t]=v?Number(v):null;});
+        document.querySelectorAll('#store-price-fields [data-price-tool]').forEach(input=>{const v=input.value.trim();prices[input.dataset.priceTool]=v?Number(v):null;});
         const result=await api('/api/admin/store',{method:'POST',data:{discordUrl:$('store-discord').value.trim(),whatsappNumber:$('store-whatsapp').value.trim(),note:$('store-note').value.trim(),prices}});
-        state.store=result.settings;renderStore();notice('Storefront berhasil diperbarui.');
+        state.store=result.settings;for(const p of state.products||[])p.price_daily=prices[p.slug];renderStore();notice('Storefront berhasil diperbarui.');
       }catch(err){notice(err.message,true);}finally{button.disabled=false;}
     });
     $('action-bind').onclick=()=>{const id=prompt('Tempel Device ID (bmdev_...):',state.chosen?.deviceId||'bmdev_');if(id!==null)action('bind-device',{deviceId:id.trim()});};
