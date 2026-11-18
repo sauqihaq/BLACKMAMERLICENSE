@@ -1,7 +1,7 @@
 import {apiHandler,body,method,http,error,cleanName,allowedPlans,createId,newKey,keyHash,DEVICE_REGEX,publicLicense} from '../../lib/common.js';
 import {requireAdmin} from '../../lib/auth.js';
 import {setup,query,audit} from '../../lib/store.js';
-import {isTool} from '../../lib/catalog.js';
+
 import adminDelivery from '../../lib/routes/admin-delivery.js';
 export default apiHandler(async(req,res)=>{
   if(req.query?.view==='delivery')return adminDelivery(req,res);
@@ -21,7 +21,8 @@ export default apiHandler(async(req,res)=>{
   const plan=String(b.plan||'Personal');
   const deviceId=String(b.deviceId||'').trim();
   const days=b.days===null||b.days===''?null:Number(b.days);
-  if(!customer||!isTool(tool)||!allowedPlans.includes(plan)|| (deviceId&&!DEVICE_REGEX.test(deviceId)) || (days!==null&&(!Number.isSafeInteger(days)||days<1||days>3650)))
+  const [validProduct]=await query('SELECT slug FROM bm_products WHERE slug=$1',[tool]);
+  if(!customer||!validProduct||!allowedPlans.includes(plan)|| (deviceId&&!DEVICE_REGEX.test(deviceId)) || (days!==null&&(!Number.isSafeInteger(days)||days<1||days>3650)))
     return error(res,400,'INVALID_INPUT','Nama, paket, Device ID, atau masa aktif tidak valid.');
   const key=newKey(tool);
   const id=createId();
