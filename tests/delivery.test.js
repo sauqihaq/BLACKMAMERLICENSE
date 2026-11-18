@@ -93,6 +93,70 @@ test('private delivery with real PostgreSQL semantics',async t=>{
   assert.equal((await d.claimLink(access.token,device(),proof())).tool_slug,'meshy');
   await assert.rejects(d.issueAccess({tool:'unknown',customer:'Test',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Upload userscript/);
  });
+ await t.test('admin creates and renames a product without changing its license/script identity',async()=>{
+  const headers={host:'localhost',origin:'http://localhost','x-bm-admin':'1',cookie:'bm_admin_session='+createSession('admin')};
+  const create=res();
+  await admin({method:'POST',headers,body:{
+    action:'create-product',slug:'custom-blender-kit',name:'Original Blender Kit',
+    description:'First product description',image:'/assets/meshy.svg'
+  }},create);
+  assert.equal(create.statusCode,201,JSON.stringify(create.body));
+  assert.equal(create.body.product.slug,'custom-blender-kit');
+
+  const dupe=res();
+  await admin({method:'POST',headers,body:{
+    action:'create-product',slug:'custom-blender-kit',name:'Duplicated Blender',
+    description:'Wrong item',image:'/assets/tripo.svg'
+  }},dupe);
+  assert.equal(dupe.statusCode,400);
+  const uploaded=await d.saveProduct('custom-blender-kit',source.replace('Test Licensed Tool','Custom Blender Script'));
+  const issued=await d.issueAccess({tool:'custom-blender-kit',customer:'Renaming Buyer',days:23,linkExpiresAt:new Date(Date.now()+86400000).toISOString()});
+  assert.equal(issued.tool,'custom-blender-kit');
+  const originalLicense=await query('SELECT id,tool_slug FROM bm_tripo_licenses WHERE id=$1',[issued.licenseId]);
+  assert.equal(originalLicense[0].tool_slug,'custom-blender-kit');
+
+  const edited=res();
+  await admin({method:'POST',headers,body:{
+    action:'update-product',tool:'custom-blender-kit',name:'BLACKMAMER Blender Pro',
+    description:'Updated showcase description',image:'/assets/sketchfab.svg'
+  }},edited);
+  assert.equal(edited.statusCode,200,JSON.stringify(edited.body));
+  assert.equal(edited.body.product.slug,'custom-blender-kit');
+  assert.equal(edited.body.product.name,'BLACKMAMER Blender Pro');
+
+  const [dbProduct]=await query('SELECT * FROM bm_products WHERE slug=$1',['custom-blender-kit']);
+  assert.equal(dbProduct.name,'BLACKMAMER Blender Pro');
+  assert.equal(dbProduct.description,'Updated showcase description');
+  assert.equal(dbProduct.image,'/assets/sketchfab.svg');
+  const [linked]=await query('SELECT l.id,l.tool_slug,s.id AS script_id,s.tool_slug AS script_tool FROM bm_install_links i JOIN bm_tripo_licenses l ON l.id=i.license_id JOIN bm_product_scripts s ON s.id=i.script_id WHERE i.id=$1',[issued.linkId]);
+  assert.equal(linked.id,issued.licenseId);
+  assert.equal(linked.tool_slug,'custom-blender-kit');
+  assert.equal(linked.script_id,uploaded.id);
+  assert.equal(linked.script_tool,'custom-blender-kit');
+  assert.equal((await d.describeLink(issued.token)).tool,'custom-blender-kit');
+  const {default:publicStore}=await import('../lib/routes/public-store.js');
+  const publicResponse=res();await publicStore({method:'GET',headers:{}},publicResponse);
+  assert.equal(publicResponse.statusCode,200);
+  const listing=publicResponse.body.catalog.find(p=>p.slug==='custom-blender-kit');
+  assert.equal(listing.name,'BLACKMAMER Blender Pro');
+  assert.equal(listing.image,'/assets/sketchfab.svg');
+
+  const bad=res();
+  await admin({method:'POST',headers,body:{
+    action:'update-product',tool:'custom-blender-kit',name:'',description:'Bad',image:'/assets/tripo.svg'
+  }},bad);
+  assert.equal(bad.statusCode,400);
+  const nonexistent=res();
+  await admin({method:'POST',headers,body:{
+    action:'update-product',tool:'does-not-exist',name:'Not Here',description:'',image:'/assets/tripo.svg'
+  }},nonexistent);
+  assert.equal(nonexistent.statusCode,404);
+  const invalidImage=res();
+  await admin({method:'POST',headers,body:{
+    action:'update-product',tool:'custom-blender-kit',name:'New name',description:'',image:'https://evil.example/icon.svg'
+  }},invalidImage);
+  assert.equal(invalidImage.statusCode,400);
+ });
  await t.test('admin authentication and CSRF block unauthorised source uploads',async()=>{
   const a=res();await admin({method:'POST',headers:{host:'localhost','x-bm-admin':'1'},body:{action:'upload',tool:'tripo',source}},a);assert.equal(a.statusCode,401);
   const b=res();await admin({method:'POST',headers:{host:'localhost',origin:'https://evil.example',cookie:'bm_admin_session='+createSession('admin')},body:{action:'upload',tool:'tripo',source}},b);assert.equal(b.statusCode,403);

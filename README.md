@@ -187,3 +187,11 @@ Local Chrome integration was also checked with a separate test extension copy an
 - Jika tanggal promo berakhir, penghitungan API langsung mengembalikan harga asli dan menyembunyikan label promo; tidak ada hitungan mundur palsu.
 - Pengaturan tersimpan di Neon pada kolom `bm_products.discount_percent` dan `discount_until`; perubahan bersifat aman terhadap data license yang sudah ada dan tidak memerlukan update extension.
 - Harga promo merupakan penawaran manual: pembeli tetap perlu menghubungi admin via WhatsApp/Discord dan admin harus memverifikasi pembayaran sebelum menerbitkan akses.
+
+
+## V22 — kelola nama dan tambah produk dari Admin
+- **Admin → Store Settings → Product Catalog** sekarang menyediakan tombol **+ Tambah Produk** dan tombol **Edit nama / gambar** di setiap produk.
+- Saat menambah produk, isi nama, Product ID/slug unik (otomatis disarankan dari nama), deskripsi, serta pilihan ilustrasi; produk langsung tersimpan di Neon dan ditampilkan di website jika aktif.
+- Saat mengedit produk, nama, deskripsi dan gambar dapat diperbarui tanpa mengganti `slug` (identifier tetap). Script yang sudah di-upload, harga, diskon, license, dan link install tetap tersambung ke ID lama.
+- Setelah produk baru dibuat, atur harga/diskon di Store Settings; upload userscript lewat **Produk & Akses** sebelum menerbitkan akses untuk pelanggan.
+- Form tambah produk lama di **Produk & Akses** tetap tersedia. Hanya admin yang login dan lolos pemeriksaan origin boleh membuat atau mengubah produk.
