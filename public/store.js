@@ -15,7 +15,9 @@ const pricesFor=t=>{
 };
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
-$('cards').innerHTML=catalog.map((t,i)=>'<article class="card"><div class="card-visual"><span class="card-index">0'+(i+1)+' / ACCESS</span><img src="'+escapeHTML(t.image)+'" alt="Ilustrasi '+escapeHTML(t.name)+'" loading="lazy"></div><div class="card-body"><div class="card-eyebrow">'+escapeHTML(t.eyebrow)+'</div><h3>'+escapeHTML(t.name)+'</h3><p>'+escapeHTML(t.description)+'</p><div class="features">'+t.features.map(f=>'<span>'+escapeHTML(f)+'</span>').join('')+'</div><div class="price-row"><div><small>STARTING FROM</small><b>'+money(t.price)+'</b></div><button type="button" data-buy="'+escapeHTML(t.slug)+'">PILIH TOOL ↗</button></div></div></article>').join('');
+$('cards').innerHTML=catalog.map((t,i)=>'<article class="card"><div class="card-visual"><span class="card-index">0'+(i+1)+' / ACCESS</span>'+
+(activePromo(t)?'<span class="discount-badge">PROMO -'+Number(t.discountPercent)+'%</span>':'')+
+'<img src="'+escapeHTML(t.image)+'" alt="Ilustrasi '+escapeHTML(t.name)+'" loading="lazy"></div><div class="card-body"><div class="card-eyebrow">'+escapeHTML(t.eyebrow)+'</div><h3>'+escapeHTML(t.name)+'</h3><p>'+escapeHTML(t.description)+'</p><div class="features">'+t.features.map(f=>'<span>'+escapeHTML(f)+'</span>').join('')+'</div><div class="price-row"><div class="price-display"><small>HARGA / DAY</small>'+pricesFor(t)+'</div><button type="button" data-buy="'+escapeHTML(t.slug)+'">PILIH TOOL ↗</button></div></div></article>').join('');
 document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>openBuy(b.dataset.buy));
 }
 function whatsappPhone(){

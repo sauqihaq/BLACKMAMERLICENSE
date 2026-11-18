@@ -178,3 +178,12 @@ Local Chrome integration was also checked with a separate test extension copy an
 - **License Manager** kini untuk monitoring, reset device, perpanjangan, ekspor, dan revoke akses yang telah dibuat.
 - Source Tripo lama dengan pola gate `bm_tripo_license_key_v1` yang dikenali diadaptasi pada saat delivery agar memakai session otomatis yang diterbitkan server. Script custom yang memiliki mekanisme login tambahan di dalam source perlu dibersihkan secara manual sebelum upload; sistem tidak otomatis membongkar atau menonaktifkan proteksi eksternal yang tidak dikenal.
 - Katalog produk dan harga harian disimpan di Neon PostgreSQL. Kartu website menampilkan **Rp / day**, bukan **Rp / token**. Produk lama tetap ada, produk baru bisa ditambahkan dan dijual sesuai izin penggunaan aset.
+
+
+## V21 — promo diskon produk (harga harian)
+- Dari **Admin → Store Settings**, untuk setiap produk kamu dapat menetapkan harga asli Rp/day, diskon 0–90%, dan tanggal akhir promo (opsional).
+- Diskon 0 menonaktifkan promo. Persentase aktif menghitung harga promo dari harga asli di server. Contoh: harga normal Rp50.000/day dan diskon 20% → Rp40.000/day.
+- Kartu katalog menampilkan badge PROMO -20%, harga normal tercoret, serta harga promo. Popup pembelian dan pesan WhatsApp memakai harga promo aktif yang sama.
+- Jika tanggal promo berakhir, penghitungan API langsung mengembalikan harga asli dan menyembunyikan label promo; tidak ada hitungan mundur palsu.
+- Pengaturan tersimpan di Neon pada kolom `bm_products.discount_percent` dan `discount_until`; perubahan bersifat aman terhadap data license yang sudah ada dan tidak memerlukan update extension.
+- Harga promo merupakan penawaran manual: pembeli tetap perlu menghubungi admin via WhatsApp/Discord dan admin harus memverifikasi pembayaran sebelum menerbitkan akses.
