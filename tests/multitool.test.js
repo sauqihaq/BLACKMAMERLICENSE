@@ -23,7 +23,7 @@ test('storefront and admin images exist and all product cards are represented',(
  for(const p of CATALOG)assert.ok(existsSync('public'+p.image),p.image);
 });
 test('client is tool-specific and uses a licensing endpoint',()=>{
- const source=readFileSync('public/tool-client-template.user.js','utf8');
+ const source=readFileSync('userscript/tool-client-template.user.js','utf8');
  assert.match(source,/__API_BASE__/);
  assert.match(source,/__TOOL__/);
  assert.match(source,/\/api\/license\//);

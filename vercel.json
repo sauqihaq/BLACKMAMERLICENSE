@@ -108,10 +108,10 @@
   ],
   "functions": {
     "api/install.js": {
-      "includeFiles": "public/*.user.js"
+      "includeFiles": "userscript/*.user.js"
     },
     "api/admin/licenses.js": {
-      "includeFiles": "public/*.user.js"
+      "includeFiles": "userscript/*.user.js"
     }
   }
 }

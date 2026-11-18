@@ -3,6 +3,7 @@ import {join} from 'node:path';
 import {apiHandler,method,error} from '../lib/common.js';
 import installToolRoute from '../lib/routes/install-tool.js';
 import deliveryRoute from '../lib/routes/delivery.js';
+import {obfuscateUserscript} from '../lib/obfuscate.js';
 export default apiHandler(async(req,res)=>{
   if(req.query?.view==='delivery')return deliveryRoute(req,res);
   if(req.query?.tool)return installToolRoute(req,res);
@@ -11,7 +12,7 @@ export default apiHandler(async(req,res)=>{
   if(!/^(?:[a-z0-9-]+\.)*[a-z0-9-]+(?::\d{1,5})?$/.test(host))return error(res,400,'BAD_HOST','Host tidak valid.');
   const protocol=host.startsWith('localhost:')||host.startsWith('127.0.0.1:')?'http':'https';
   const origin=`${protocol}://${host}`;
-  const source=await readFile(join(process.cwd(),'public','tripo-source.user.js'),'utf8');
+  const source=await readFile(join(process.cwd(),'userscript','tripo-source.user.js'),'utf8');
   const configured=source.replace('https://GANTI-PROJECT.vercel.app',origin);
   if(configured===source)throw Error('Template userscript tidak ditemukan.');
   res.statusCode=200;
@@ -19,5 +20,5 @@ export default apiHandler(async(req,res)=>{
   res.setHeader('Content-Disposition','attachment; filename="BlackMamer_Tripo_V12_AutoConfigured.user.js"');
   res.setHeader('Cache-Control','no-store');
   res.setHeader('X-Content-Type-Options','nosniff');
-  res.end(configured);
+  res.end(obfuscateUserscript(configured));
 });

@@ -1,6 +1,7 @@
 import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID,randomBytes} from 'node:crypto';
+import {runInNewContext} from 'node:vm';
 import {PGlite} from '@electric-sql/pglite';
 const db=new PGlite();
 mock.module('@neondatabase/serverless',{namedExports:{neon:()=>({query:async(s,p)=>(await db.query(s,p)).rows})}});
@@ -33,6 +34,20 @@ test('private delivery with real PostgreSQL semantics',async t=>{
   const retry=await d.claimLink(link.token,a,pa);assert.equal(d.credential(retry),d.credential(claimed));
   assert.equal(await d.claimLink(link.token,device(),proof()),null);assert.equal(await d.claimLink(link.token,a,proof()),null);
   const [l]=await query('SELECT device_id FROM bm_tripo_licenses WHERE id=$1',[id]);assert.equal(l.device_id,a);
+ });
+ await t.test('existing links deliver executable obfuscated source with matching hash on retries',async()=>{
+  const first=res(),second=res();
+  const request={method:'POST',headers:{},body:{action:'claim',token:link.token,deviceId:a,proof:pa}};
+  await route(request,first);await route(request,second);
+  assert.equal(first.statusCode,200);
+  const pkg=first.body.package;
+  assert.notEqual(pkg.source,source);
+  assert.equal(pkg.sourceHash,d.hash(pkg.source));
+  assert.equal(second.body.package.source,pkg.source);
+  assert.deepEqual(d.parseSource(pkg.source),d.parseSource(source));
+  const sandbox={window:{}};
+  runInNewContext(pkg.source,sandbox,{timeout:1000});
+  assert.equal(sandbox.window.testLicensed,true);
  });
  await t.test('session remains valid after link expiry but not license expiry/revocation/reset',async()=>{
   const s=d.credential(claimed);assert.ok(await d.validateSession(s,a,'tripo'));assert.equal(await d.validateSession(s,a,'meshy'),null);assert.equal(await d.validateSession(s,device(),'tripo'),null);
