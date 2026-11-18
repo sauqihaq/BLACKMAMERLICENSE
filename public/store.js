@@ -6,8 +6,8 @@ const defaultCatalog=[
 {slug:'sketchfab-textures',name:'Sketchfab Texture Kit',eyebrow:'TEXTURE · MATERIALS',description:'Ekstrak tekstur dari GLB milikmu atau aset yang boleh diunduh.',features:['Texture PNG','GLB lokal','Material workflow'],image:'/assets/textures.svg'},
 {slug:'sketchfab-model',name:'BLACKMAMERSTUDIO | Model Tools SILVER',eyebrow:'SKETCHFAB · MODEL TOOLS',description:'Pilih file GLB dari perangkatmu di panel SILVER, lalu konversi dan unduh hasilnya sebagai FBX.',features:['File GLB lokal','Ekspor FBX','Panel SILVER'],image:'/assets/sketchfab.svg'}];
 const $=id=>document.getElementById(id);
-let catalog=defaultCatalog.map(t=>({...t,price:null})),contacts={discordUrl:'',whatsappNumber:'',note:''},selected=null;
-const money=n=>n==null?'Tanya Admin':new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n)+' / token';
+let catalog=[],contacts={discordUrl:'',whatsappNumber:'',note:''},selected=null;
+const money=n=>n==null?'Tanya Admin':new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n)+' / day';
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
 $('cards').innerHTML=catalog.map((t,i)=>'<article class="card"><div class="card-visual"><span class="card-index">0'+(i+1)+' / ACCESS</span><img src="'+escapeHTML(t.image)+'" alt="Ilustrasi '+escapeHTML(t.name)+'" loading="lazy"></div><div class="card-body"><div class="card-eyebrow">'+escapeHTML(t.eyebrow)+'</div><h3>'+escapeHTML(t.name)+'</h3><p>'+escapeHTML(t.description)+'</p><div class="features">'+t.features.map(f=>'<span>'+escapeHTML(f)+'</span>').join('')+'</div><div class="price-row"><div><small>STARTING FROM</small><b>'+money(t.price)+'</b></div><button type="button" data-buy="'+escapeHTML(t.slug)+'">PILIH TOOL ↗</button></div></div></article>').join('');
@@ -43,6 +43,5 @@ $('buy-wa').addEventListener('click',event=>{
  }
 });
 $('buy-discord').onclick=()=>{if(!selected||!contacts.discordUrl)return;navigator.clipboard?.writeText(getMessage()).catch(()=>{});window.open(contacts.discordUrl,'_blank','noopener,noreferrer');$('buy-help').textContent='Discord dibuka. Salin pesan pembelian bila diperlukan: '+getMessage();};
-render();
-fetch('/api/store',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('API belum siap');return r.json();}).then(data=>{if(!data.ok)throw Error('Store tidak tersedia');catalog=data.catalog;contacts=data.contacts;render();if(selected)updateWhatsAppLink();}).catch(()=>{$('catalog-note').textContent='Katalog tersedia sebagai pratinjau. Hubungkan Neon Postgres dan isi kontak/harga melalui Admin → Store Settings untuk mengaktifkan pemesanan.';});
+fetch('/api/store',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('API belum siap');return r.json();}).then(data=>{if(!data.ok)throw Error('Store tidak tersedia');catalog=data.catalog;contacts=data.contacts;render();if(selected)updateWhatsAppLink();}).catch(()=>{$('cards').textContent='Katalog belum tersedia. Hubungi admin.';$('catalog-note').textContent='Tidak dapat memuat produk dari server.';});
 })();
