@@ -18,7 +18,7 @@ test('storefront and admin images exist and all product cards are represented',(
  const ui=readFileSync('public/index.html','utf8');
  const admin=readFileSync('public/admin.html','utf8');
  assert.match(ui,/id="buy-install"/);
- assert.match(admin,/id="create-tool"/);
+ assert.match(admin,/admin-delivery\.js/);
  assert.match(admin,/id="tab-store"/);
  for(const p of CATALOG)assert.ok(existsSync('public'+p.image),p.image);
 });

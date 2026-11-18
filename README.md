@@ -168,3 +168,13 @@ Local Chrome integration was also checked with a separate test extension copy an
 - Checkout opens a native `https://wa.me/<phone>?text=<message>` link from the button. Configure the number in Admin → Store Settings.
 - Admin accepts `https://wa.me/628...`, `628...`, `+628...` and Indonesian `08...` and saves digits-only international format.
 - A numeric product price is displayed as `Rp XX.XXX / token` in the catalog, modal and order message. This is only a display unit, not an automated token balance.
+
+
+## V20: satu alur produk → upload → akses otomatis
+- Buka **Produk & Akses** di admin. Pilih satu produk dari katalog website atau **Tambah produk baru**, isi nama/slug/deskripsi/pilihan gambar, lalu upload source `.user.js` secara manual.
+- **Tidak ada lagi tombol template default** untuk membuat link pelanggan baru. Script arsip lama tetap disimpan tetapi tidak dipakai otomatis. Upload ulang script milik sendiri agar ditandai `uploaded`.
+- Setelah pembayaran manual dikonfirmasi, pilih produk yang sama, nama pelanggan, paket, durasi (7/30/90/365 hari atau Lifetime), dan batas waktu link; klik **Terbitkan akses + link install**.
+- Satu operasi database menghasilkan satu lisensi dan satu link install untuk produk yang sama. Pelanggan cukup mengunjungi `/install#token=...`, memasang BlackMamer Extension, dan mengonfirmasi instalasi. Pelanggan tidak perlu mengetik key hasil generate.
+- **License Manager** kini untuk monitoring, reset device, perpanjangan, ekspor, dan revoke akses yang telah dibuat.
+- Source Tripo lama dengan pola gate `bm_tripo_license_key_v1` yang dikenali diadaptasi pada saat delivery agar memakai session otomatis yang diterbitkan server. Script custom yang memiliki mekanisme login tambahan di dalam source perlu dibersihkan secara manual sebelum upload; sistem tidak otomatis membongkar atau menonaktifkan proteksi eksternal yang tidak dikenal.
+- Katalog produk dan harga harian disimpan di Neon PostgreSQL. Kartu website menampilkan **Rp / day**, bukan **Rp / token**. Produk lama tetap ada, produk baru bisa ditambahkan dan dijual sesuai izin penggunaan aset.

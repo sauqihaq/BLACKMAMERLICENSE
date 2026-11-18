@@ -26,7 +26,7 @@ test('installer rejects host-header injection',async()=>{
 test('admin has searchable license/users/activity controls and Vercel API paths',()=>{
  const admin=readFileSync(join(process.cwd(),'public','admin.html'),'utf8');
  const js=readFileSync(join(process.cwd(),'public','admin.js'),'utf8');
- for(const name of ['recent-users','recent-activity','license-rows','event-rows','create-form','login-form','manage-modal'])assert.ok(admin.includes(name),name);
+ for(const name of ['recent-users','recent-activity','license-rows','event-rows','store-form','login-form','manage-modal'])assert.ok(admin.includes(name),name);
  for(const route of ['/api/admin/summary','/api/admin/licenses','/api/admin/events','/api/admin/license-action','/api/admin/login'])assert.ok(js.includes(route),route);
  assert.ok(!admin.includes('ADMIN_SESSION_SECRET'));
  assert.ok(!admin.includes('ADMIN_PASSWORD'));

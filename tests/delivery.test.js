@@ -67,6 +67,21 @@ test('private delivery with real PostgreSQL semantics',async t=>{
  await t.test('new source versions do not change already issued links',async()=>{
   const l=await d.issueLink(await license(),new Date(Date.now()+86400000).toISOString());await d.saveProduct('tripo',source.replace('1.2','2.0'));assert.equal((await d.describeLink(l.token)).version,'1.2');
  });
+ await t.test('auto access is product-bound, uploaded-only and no second key input',async()=>{
+  // A legacy / template script is not eligible to issue new access.
+  await query("INSERT INTO bm_product_scripts(id,tool_slug,name,version,matches,source_cipher,source_hash,source_kind)VALUES($1,'meshy','OLD TEMPLATE','0.1','[]'::jsonb,$2,$3,'legacy')",
+    [randomUUID(),d.seal(source),d.hash(source)]);
+  await assert.rejects(d.issueAccess({tool:'meshy',customer:'Test buyer',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Upload userscript/);
+  await d.saveProduct('meshy',source.replace('Test Licensed Tool','Meshy Manual Upload'));
+  const access=await d.issueAccess({tool:'meshy',customer:'Test buyer',plan:'Personal',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()});
+  assert.equal(access.tool,'meshy');assert.ok(!('key' in access));
+  const description=await d.describeLink(access.token);
+  assert.equal(description.tool,'meshy');assert.equal(description.name,'Meshy Manual Upload');
+  const [linked]=await query('SELECT l.tool_slug,s.tool_slug AS script_tool,d.license_id FROM bm_install_links d JOIN bm_tripo_licenses l ON l.id=d.license_id JOIN bm_product_scripts s ON s.id=d.script_id WHERE d.id=$1',[access.linkId]);
+  assert.equal(linked.tool_slug,'meshy');assert.equal(linked.script_tool,'meshy');
+  assert.equal((await d.claimLink(access.token,device(),proof())).tool_slug,'meshy');
+  await assert.rejects(d.issueAccess({tool:'unknown',customer:'Test',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Upload userscript/);
+ });
  await t.test('admin authentication and CSRF block unauthorised source uploads',async()=>{
   const a=res();await admin({method:'POST',headers:{host:'localhost','x-bm-admin':'1'},body:{action:'upload',tool:'tripo',source}},a);assert.equal(a.statusCode,401);
   const b=res();await admin({method:'POST',headers:{host:'localhost',origin:'https://evil.example',cookie:'bm_admin_session='+createSession('admin')},body:{action:'upload',tool:'tripo',source}},b);assert.equal(b.statusCode,403);
