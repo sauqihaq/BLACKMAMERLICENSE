@@ -79,6 +79,17 @@ test('private delivery with real PostgreSQL semantics',async t=>{
   assert.equal(description.tool,'meshy');assert.equal(description.name,'Meshy Manual Upload');
   const [linked]=await query('SELECT l.tool_slug,s.tool_slug AS script_tool,d.license_id FROM bm_install_links d JOIN bm_tripo_licenses l ON l.id=d.license_id JOIN bm_product_scripts s ON s.id=d.script_id WHERE d.id=$1',[access.linkId]);
   assert.equal(linked.tool_slug,'meshy');assert.equal(linked.script_tool,'meshy');
+  // Arbitrary daily durations are accepted and persisted to the license expiry.
+  const custom=await d.issueAccess({tool:'meshy',customer:'Custom 43 days',plan:'Personal',days:43,linkExpiresAt:new Date(Date.now()+86400000).toISOString()});
+  const [customRow]=await query('SELECT expires_at FROM bm_tripo_licenses WHERE id=$1',[custom.licenseId]);
+  const delta=(new Date(customRow.expires_at).getTime()-Date.now())/86400000;
+  assert.ok(delta>42.9&&delta<=43,'License must last the custom number of days');
+  const lifetime=await d.issueAccess({tool:'meshy',customer:'Lifetime buyer',days:'lifetime',linkExpiresAt:new Date(Date.now()+86400000).toISOString()});
+  const [lifeRow]=await query('SELECT expires_at FROM bm_tripo_licenses WHERE id=$1',[lifetime.licenseId]);
+  assert.equal(lifeRow.expires_at,null);
+  await assert.rejects(d.issueAccess({tool:'meshy',customer:'Bad buyer',days:3651,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Masa aktif/);
+  await assert.rejects(d.issueAccess({tool:'meshy',customer:'Bad buyer',days:0,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Masa aktif/);
+
   assert.equal((await d.claimLink(access.token,device(),proof())).tool_slug,'meshy');
   await assert.rejects(d.issueAccess({tool:'unknown',customer:'Test',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Upload userscript/);
  });
