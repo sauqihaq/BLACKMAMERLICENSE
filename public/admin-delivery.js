@@ -4,6 +4,14 @@
  const nav=el('button','↗ Produk & Akses','nav-item');nav.dataset.tab='delivery';$('.nav-item[data-tab="store"]').after(nav);
  const section=el('section','','tab hidden');section.id='tab-delivery';$('#tab-store').after(section);
  section.innerHTML="\n<div class=\"section-heading\"><div class=\"eyebrow\">BLACKMAMER / SINGLE ACCESS FLOW</div><h1>Produk & Akses<span class=\"dot\">.</span></h1><p>Satu produk untuk upload script dan penerbitan akses. Pelanggan tidak perlu mengetik license key.</p></div>\n<section class=\"panel product-choice\"><h2>1 · Pilih produk</h2><p>Pilih dari produk yang ada di website atau buat produk baru milikmu.</p>\n<label>PRODUK<select id=\"delivery-tool\"></select></label><p id=\"delivery-product-info\"></p>\n<details><summary>+ Tambah produk baru</summary><form id=\"delivery-create\" class=\"form-stack\">\n<label>NAMA PRODUK<input id=\"dp-name\" required maxlength=\"120\" placeholder=\"BlackMamer Blender Tools\"></label>\n<label>SLUG UNIK<input id=\"dp-slug\" required maxlength=\"36\" pattern=\"[a-z][a-z0-9-]{2,35}\" placeholder=\"blackmamer-blender\"></label>\n<label>DESKRIPSI<input id=\"dp-description\" maxlength=\"500\" placeholder=\"Keterangan produk\"></label>\n<label>GAMBAR<select id=\"dp-image\"><option value=\"/assets/tripo.svg\">3D Cube</option><option value=\"/assets/meshy.svg\">3D Mesh</option><option value=\"/assets/textures.svg\">Texture</option><option value=\"/assets/sketchfab.svg\">3D Model</option></select></label>\n<button class=\"btn btn-primary\">Simpan produk</button></form></details></section>\n<div class=\"two-panels delivery-grid\">\n<article class=\"panel\"><h2>2 · Upload script produk</h2><p>Source tersimpan terenkripsi untuk produk yang dipilih. Tidak ada script template yang otomatis dipakai.</p>\n<form id=\"delivery-upload\" class=\"form-stack\"><label>FILE USERSCRIPT<input id=\"delivery-file\" type=\"file\" accept=\".js,.user.js\" required></label>\n<p>Harus memiliki @name dan @match. Maksimal 1 MB.</p><button class=\"btn btn-primary\">Upload versi script</button></form>\n<div id=\"delivery-scripts\" class=\"delivery-list\"></div></article>\n<article class=\"panel\"><h2>3 · Akses pelanggan otomatis</h2><p>Sesudah pembayaran dikonfirmasi, server menerbitkan satu license dan satu link untuk produk yang sama.</p>\n<form id=\"delivery-issue\" class=\"form-stack\">\n<label>NAMA / USERNAME<input id=\"delivery-customer\" required maxlength=\"100\" placeholder=\"Nama pelanggan\"></label>\n<label>PAKET<select id=\"delivery-plan\"><option>Personal</option><option>Pro</option><option>Studio</option></select></label>\n<label>MASA AKTIF<select id=\"delivery-days\"><option value=\"7\">7 Days</option><option value=\"30\" selected>30 Days</option><option value=\"90\">90 Days</option><option value=\"365\">365 Days</option><option value=\"lifetime\">Lifetime</option></select></label>\n<label>LINK BERLAKU SAMPAI<input id=\"delivery-expiry\" type=\"datetime-local\" required></label>\n<button class=\"btn btn-primary\" id=\"delivery-issue-submit\" disabled>Terbitkan akses + link install</button></form>\n<div id=\"delivery-result\" hidden><p>Salin link privat ke pelanggan; akses akan terikat ke browser pertama saat install.</p>\n<input id=\"delivery-url\" readonly aria-label=\"Link install\"><button class=\"btn btn-primary\" id=\"delivery-copy\">Salin link</button></div></article></div>\n<article class=\"panel\" style=\"margin-top:24px\"><h2>Riwayat link install</h2><div id=\"delivery-links\" class=\"delivery-list\"></div></article>\n<p id=\"delivery-status\" role=\"status\" aria-live=\"polite\"></p>";
+ const productToggle=el('button','Sembunyikan dari toko','btn btn-ghost');
+ productToggle.type='button';productToggle.hidden=true;
+ $('#delivery-product-info').after(productToggle);
+ productToggle.onclick=async()=>{
+  const p=chosen();if(!p)return;productToggle.disabled=true;
+  try{await api('/api/admin/delivery',{action:'set-product',tool:p.slug,active:!p.active});await load(p.slug);status('Status produk diperbarui.');}
+  catch(e){status(e.message);}finally{productToggle.disabled=false;}
+ };
  const status=s=>$('#delivery-status').textContent=s;
  let products=[],scripts=[];
  async function api(path,data){
@@ -13,13 +21,14 @@
  function chosen(){return products.find(p=>p.slug===$('#delivery-tool').value);}
  function refreshProduct(){
   const p=chosen(),script=p&&scripts.find(s=>s.tool_slug===p.slug);
-  $('#delivery-product-info').textContent=p?p.name+' · '+(p.active?'Published':'Hidden'):'Belum ada produk';
+  $('#delivery-product-info').textContent=p?p.name+' · '+(p.active?'Published':'Hidden'):'Pilih produk terlebih dahulu, agar tidak salah mengambil script Tripo atau produk lain.';
+  productToggle.hidden=!p;if(p)productToggle.textContent=p.active?'Sembunyikan dari toko':'Tampilkan di toko';
   $('#delivery-scripts').textContent=script?'Script terpasang: '+script.name+' (v'+script.version+')':'Script belum di-upload untuk produk ini.';
   $('#delivery-issue-submit').disabled=!(p&&p.active&&script);
  }
  async function load(preferred=''){
   const r=await api('/api/admin/delivery');products=r.products;scripts=r.scripts;
-  const selector=$('#delivery-tool'),previous=preferred||selector.value;selector.replaceChildren();
+  const selector=$('#delivery-tool'),previous=preferred||selector.value;selector.replaceChildren(el('option','— Pilih produk yang benar —'));selector.firstChild.value='';
   for(const p of products){const o=el('option',p.name+(p.active?'':' · hidden'));o.value=p.slug;selector.append(o);}
   if(products.some(p=>p.slug===previous))selector.value=previous;
   refreshProduct();

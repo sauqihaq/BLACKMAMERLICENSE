@@ -19,7 +19,7 @@
   }
   function lock(){$('auth-screen').classList.remove('hidden');$('shell').classList.add('hidden');}
   function unlock(){$('auth-screen').classList.add('hidden');$('shell').classList.remove('hidden');}
-  function tab(name){if(!viewNames[name])return;state.tab=name;for(const key of Object.keys(viewNames))$('tab-'+key).classList.toggle('hidden',key!==name);document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.classList.contains('nav-item')&&b.dataset.tab===name));$('current-section').textContent=viewNames[name];window.scrollTo({top:0,behavior:'instant'});}
+  function tab(name){if(!viewNames[name])return;state.tab=name;for(const key of Object.keys(viewNames))$('tab-'+key).classList.toggle('hidden',key!==name);document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.classList.contains('nav-item')&&b.dataset.tab===name));$('current-section').textContent=viewNames[name];window.scrollTo({top:0,behavior:'instant'});if(name==='store')loadAll();}
   function showModal(name){$(name).classList.remove('hidden');}
   function hideModals(){for(const id of ['manage-modal'])$(id)?.classList.add('hidden');}
   async function loadAll(){
