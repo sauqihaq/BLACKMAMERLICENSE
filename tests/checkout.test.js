@@ -17,6 +17,6 @@ test('checkout is a native wa.me link with day price',()=>{
  assert.match(js,/https:\/\/wa\.me\//);
  assert.match(js,/encodeURIComponent\(getMessage\(\)\)/);
  assert.match(js,/\+\s*' \/ day'/);
- assert.match(admin,/LICENSE PRICES · IDR \/ DAY/);
+ assert.match(admin,/HARGA HARIAN & DISKON PRODUK/);
  assert.match(admin,/WHATSAPP LINK/);
 });
