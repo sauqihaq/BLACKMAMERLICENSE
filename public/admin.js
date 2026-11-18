@@ -117,7 +117,7 @@
     $('product-edit-box').scrollIntoView({behavior:'smooth',block:'nearest'});
   }
   function freshProductSlug(name){
-    return String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9\\s-]/g,'').trim().replace(/\\s+/g,'-').slice(0,36);
+    return String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-').slice(0,36);
   }
   function renderStats(){const s=state.summary||{};$('stat-total').textContent=s.total??'—';$('stat-active').textContent=s.active??'—';$('stat-online').textContent=s.online24h??'—';$('stat-blocked').textContent=s.blocked24h??'—';}
   function person(label,subtitle){const name=String(label||'Unknown');const initial=html(name.slice(0,1).toUpperCase());return `<div class="person"><div class="person-icon">${initial}</div><div><strong>${html(name)}</strong><small>${html(subtitle||'')}</small></div></div>`;}
