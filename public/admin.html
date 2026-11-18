@@ -45,13 +45,13 @@
       <section class="tab hidden" id="tab-store"><div class="section-heading"><div class="eyebrow">BLACKMAMER CONTROL / STORE</div><div class="heading-row"><div><h1>Store Settings<span class="dot">.</span></h1><p>Atur katalog, harga, Discord, dan WhatsApp untuk pembelian manual.</p></div><a class="btn btn-ghost" href="/" target="_blank" rel="noopener">↗ Lihat Storefront</a></div></div>
       <div class="two-panels store-panels"><section class="panel"><h2>Sales Contacts</h2><p>Kontak ini tampil di website publik. Isi minimal satu supaya tombol order dapat dipakai.</p><form id="store-form" class="form-stack">
       <label>DISCORD LINK <em>(INVITE / USER PROFILE)</em><input id="store-discord" type="url" maxlength="200" placeholder="https://discord.gg/xxxxx" /></label>
-      <label>WHATSAPP NUMBER <em>(PAKAI 62, TANPA +)</em><input id="store-whatsapp" type="text" maxlength="24" inputmode="tel" placeholder="6281234567890" /></label>
+      <label>WHATSAPP LINK <em>(WA.ME / NOMOR 62 / NOMOR 08)</em><input id="store-whatsapp" type="text" maxlength="120" inputmode="url" placeholder="https://wa.me/6281234567890" /></label>
       <label>PAYMENT / CONTACT NOTE<input id="store-note" maxlength="160" placeholder="Contoh: Chat admin untuk metode pembayaran." /></label>
-      <div class="store-form-divider">LICENSE PRICES · IDR</div>
-      <label>TRIPO3D STUDIO<input id="price-tripo" type="number" min="1000" max="100000000" step="1000" placeholder="Contoh: 50000" /></label>
-      <label>MESHY 3D TOOLS<input id="price-meshy" type="number" min="1000" max="100000000" step="1000" placeholder="Contoh: 50000" /></label>
-      <label>SKETCHFAB TEXTURE KIT<input id="price-sketchfab-textures" type="number" min="1000" max="100000000" step="1000" placeholder="Contoh: 50000" /></label>
-      <label>SKETCHFAB MODEL KIT<input id="price-sketchfab-model" type="number" min="1000" max="100000000" step="1000" placeholder="Contoh: 50000" /></label>
+      <div class="store-form-divider">LICENSE PRICES · IDR / TOKEN</div>
+      <label>TRIPO3D STUDIO<input id="price-tripo" type="number" min="1000" max="100000000" step="1000" placeholder="Contoh: 50000 (per token)" /></label>
+      <label>MESHY 3D TOOLS<input id="price-meshy" type="number" min="1000" max="100000000" step="1000" placeholder="Contoh: 50000 (per token)" /></label>
+      <label>SKETCHFAB TEXTURE KIT<input id="price-sketchfab-textures" type="number" min="1000" max="100000000" step="1000" placeholder="Contoh: 50000 (per token)" /></label>
+      <label>SKETCHFAB MODEL KIT<input id="price-sketchfab-model" type="number" min="1000" max="100000000" step="1000" placeholder="Contoh: 50000 (per token)" /></label>
       <button class="btn btn-primary" id="save-store" type="submit">Save Store Settings →</button></form></section>
       <section class="panel"><h2>Product Catalog</h2><p>Empat tools menggunakan key terpisah. Harga kosong ditampilkan sebagai "Tanya Admin".</p><div class="store-preview"><article><img src="/assets/tripo.svg" alt="Tripo 3D" /><b>TRIPO3D STUDIO</b><small>MODEL · CONVERTER</small></article><article><img src="/assets/meshy.svg" alt="Meshy" /><b>MESHY 3D TOOLS</b><small>WORKFLOW · 3D</small></article><article><img src="/assets/textures.svg" alt="Textures" /><b>SKETCHFAB TEXTURES</b><small>TEXTURES · MATERIALS</small></article><article><img src="/assets/sketchfab.svg" alt="Models" /><b>SKETCHFAB MODELS</b><small>MODEL · LIBRARY</small></article></div>
       <div class="store-guide"><strong>Manual Payment Workflow</strong><p>1. Pembeli pilih tool dan klik kontak.<br>2. Kamu verifikasi pembayaran lewat Discord/WA.<br>3. Buka License Manager → New License → pilih tool.<br>4. Berikan key satu kali kepada pembeli.</p><p>Catatan: key tidak otomatis terbit ketika pengguna hanya menghubungi admin. Validasi perangkat tetap berjalan di Vercel.</p></div></section></div>

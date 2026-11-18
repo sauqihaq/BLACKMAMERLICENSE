@@ -163,3 +163,8 @@ Payment confirmation remains manual, as in the current store. After payment, iss
 Run `npm ci` and `npm test` using Node 22.3 or later (module-mocking support). The suite includes an in-memory PostgreSQL engine for encrypted uploads, snapshot versions, claim retries, expiry, license/device revocation and admin authentication. Its single database connection cannot reproduce all multi-connection production races; first-use device binding remains a conditional SQL update under a row lock.
 
 Local Chrome integration was also checked with a separate test extension copy and test database: authenticated admin upload, user-selected expiry, link generation, website detection, explicit installation confirmation, licensed/personal script execution, editor/export separation and denial after revocation. This is local validation, not evidence of a production deployment or Web Store approval.
+
+## V16: WhatsApp checkout / per token prices
+- Checkout opens a native `https://wa.me/<phone>?text=<message>` link from the button. Configure the number in Admin → Store Settings.
+- Admin accepts `https://wa.me/628...`, `628...`, `+628...` and Indonesian `08...` and saves digits-only international format.
+- A numeric product price is displayed as `Rp XX.XXX / token` in the catalog, modal and order message. This is only a display unit, not an automated token balance.

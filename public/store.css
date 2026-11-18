@@ -12,3 +12,8 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 .install-link{display:block;text-align:center;margin-top:15px;padding:13px;border:1px solid #3b7a80;border-radius:9px;color:#a6fff0;font-size:12px;font-weight:800;background:#0c2d38;text-decoration:none}.install-link:hover{border-color:#55e3d7;background:#154352}
+
+/* Native link cannot be blocked as a scripted popup */
+.contact-actions a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer;white-space:nowrap}
+.contact-actions a.btn[aria-disabled="true"]{opacity:.38;cursor:not-allowed;pointer-events:none}
+.price-row b,.selected-price b{font-variant-numeric:tabular-nums}

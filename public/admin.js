@@ -45,7 +45,7 @@
   function renderStore(){
     const s=state.store;if(!s)return;
     $('store-discord').value=s.discord_url||'';
-    $('store-whatsapp').value=s.whatsapp_number||'';
+    $('store-whatsapp').value=s.whatsapp_number?'https://wa.me/'+s.whatsapp_number:'';
     $('store-note').value=s.contact_note||'';
     ['tripo','meshy','sketchfab-textures','sketchfab-model'].forEach(t=>$('price-'+t).value=s.prices?.[t]??'');
   }
