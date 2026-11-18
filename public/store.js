@@ -8,6 +8,11 @@ const defaultCatalog=[
 const $=id=>document.getElementById(id);
 let catalog=[],contacts={discordUrl:'',whatsappNumber:'',note:''},selected=null;
 const money=n=>n==null?'Tanya Admin':new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n)+' / day';
+const activePromo=t=>Number(t.discountPercent)>0&&Number(t.originalPrice)>Number(t.price);
+const pricesFor=t=>{
+ if(!activePromo(t))return '<b>'+escapeHTML(money(t.price))+'</b>';
+ return '<s class="old-price">'+escapeHTML(money(t.originalPrice))+'</s><b class="promo-price">'+escapeHTML(money(t.price))+'</b>';
+};
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
 $('cards').innerHTML=catalog.map((t,i)=>'<article class="card"><div class="card-visual"><span class="card-index">0'+(i+1)+' / ACCESS</span><img src="'+escapeHTML(t.image)+'" alt="Ilustrasi '+escapeHTML(t.name)+'" loading="lazy"></div><div class="card-body"><div class="card-eyebrow">'+escapeHTML(t.eyebrow)+'</div><h3>'+escapeHTML(t.name)+'</h3><p>'+escapeHTML(t.description)+'</p><div class="features">'+t.features.map(f=>'<span>'+escapeHTML(f)+'</span>').join('')+'</div><div class="price-row"><div><small>STARTING FROM</small><b>'+money(t.price)+'</b></div><button type="button" data-buy="'+escapeHTML(t.slug)+'">PILIH TOOL ↗</button></div></div></article>').join('');
@@ -28,11 +33,19 @@ function updateWhatsAppLink(){
 function openBuy(slug){selected=catalog.find(t=>t.slug===slug);if(!selected)return;
 $('buy-install').href='/extension';
 $('buy-image').src=selected.image;$('buy-title').textContent=selected.name;$('buy-desc').textContent=selected.description;$('buy-price').textContent=money(selected.price);
+const discounted=activePromo(selected);
+$('buy-original-price').hidden=!discounted;
+$('buy-original-price').textContent=discounted?money(selected.originalPrice):'';
+$('buy-sale-badge').hidden=!discounted;
+$('buy-sale-badge').textContent=discounted?'DISKON '+Number(selected.discountPercent)+'%':'';
+$('buy-promo-expiry').hidden=!discounted||!selected.discountUntil;
+$('buy-promo-expiry').textContent=discounted&&selected.discountUntil?'Promo sampai '+new Date(selected.discountUntil).toLocaleString('id-ID'):'';
+
 updateWhatsAppLink();$('buy-discord').disabled=!contacts.discordUrl;
 $('buy-help').textContent=(!contacts.whatsappNumber&&!contacts.discordUrl)?'Kontak admin belum dikonfigurasi. Silakan hubungi pemilik website.':(contacts.note||'Admin akan memberikan instruksi pembayaran. License dibuat setelah pembayaran diverifikasi.');
 $('buy-modal').classList.remove('hidden');$('buyer-name').focus();}
 function closeBuy(){$('buy-modal').classList.add('hidden');}
-function getMessage(){return 'Halo admin BLACKMAMERSTUDIO, saya mau pesan '+selected.name+'. Harga: '+money(selected.price)+'. Nama: '+($('buyer-name').value.trim()||'(belum diisi)')+'. Mohon info pembayaran dan proses license.';}
+function getMessage(){return 'Halo admin BLACKMAMERSTUDIO, saya mau pesan '+selected.name+'. '+(activePromo(selected)?'Harga normal: '+money(selected.originalPrice)+'. Diskon '+selected.discountPercent+'%. Harga promo: '+money(selected.price)+'. ':'Harga: '+money(selected.price)+'. ')+'Nama: '+($('buyer-name').value.trim()||'(belum diisi)')+'. Mohon info pembayaran dan proses license.';}
 $('close-buy').onclick=closeBuy;$('buy-modal').onclick=e=>{if(e.target===$('buy-modal'))closeBuy();};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeBuy();});
 $('buyer-name').addEventListener('input',updateWhatsAppLink);
 $('buy-wa').addEventListener('click',event=>{

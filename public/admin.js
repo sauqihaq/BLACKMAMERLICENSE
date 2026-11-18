@@ -42,6 +42,19 @@
     catch(err){notice(err.message,true);}
   }
   function render(){renderStats();renderOverview();renderLicenses();renderEvents();}
+  const rupiah = value => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(value);
+  function previewDiscount(row){
+    const base=Number(row.querySelector('[data-price-tool]').value);
+    const percent=Number(row.querySelector('[data-discount-tool]').value)||0;
+    const end=row.querySelector('[data-discount-end]').value;
+    const box=row.querySelector('.discount-preview');
+    if(!Number.isSafeInteger(base)||base<1000){box.textContent='Isi harga normal dulu untuk melihat promo.';return;}
+    if(!Number.isInteger(percent)||percent<0||percent>90){box.textContent='Diskon harus 0–90%.';return;}
+    if(!percent){box.textContent='Harga normal: '+rupiah(base)+' / day · Diskon tidak aktif';return;}
+    if(end && new Date(end).getTime()<=Date.now()){box.textContent='Tanggal promo sudah lewat. Pilih tanggal baru.';return;}
+    const discounted=Math.round(base*(100-percent)/100);
+    box.textContent=rupiah(base)+' → '+rupiah(discounted)+' / day · Hemat '+percent+'%'+(end?' · Hingga '+new Date(end).toLocaleString('id-ID'):' · Tanpa tanggal akhir');
+  }
   function renderStore(){
     const s=state.store;if(!s)return;
     $('store-discord').value=s.discord_url||'';
@@ -50,13 +63,35 @@
     const fields=$('store-price-fields'),preview=$('store-product-preview');
     fields.replaceChildren();preview.replaceChildren();
     for(const p of state.products||[]){
-      const label=document.createElement('label');label.textContent=p.name+' · Rp/day';
-      const input=document.createElement('input');
-      input.type='number';input.min='1000';input.max='100000000';input.step='1000';input.placeholder='Contoh: 50000 / day';
-      input.dataset.priceTool=p.slug;input.value=p.price_daily??s.prices?.[p.slug]??'';
-      label.append(input);fields.append(label);
+      const row=document.createElement('div');row.className='discount-editor';
+      const heading=document.createElement('div');heading.className='discount-editor-title';
+      const title=document.createElement('strong');title.textContent=p.name;
+      const status=document.createElement('small');status.textContent=p.active?'PUBLISHED':'HIDDEN';
+      heading.append(title,status);row.append(heading);
+      const controls=document.createElement('div');controls.className='discount-editor-grid';
+      const addField=(labelText,kind,attrs)=>{
+        const label=document.createElement('label');label.textContent=labelText;
+        const input=document.createElement('input');input.type=kind;
+        for(const [key,value] of Object.entries(attrs))input.setAttribute(key,String(value));
+        label.append(input);controls.append(label);return input;
+      };
+      const regular=addField('HARGA NORMAL · RP / DAY','number',{min:1000,max:100000000,step:1000,placeholder:'Contoh: 50000','data-price-tool':p.slug});
+      regular.value=p.price_daily??s.prices?.[p.slug]??'';
+      const rate=addField('DISKON · %','number',{min:0,max:90,step:1,placeholder:'0 = tanpa diskon','data-discount-tool':p.slug});
+      rate.value=p.discount_percent??0;
+      const expires=addField('BERAKHIR PADA · OPSIONAL','datetime-local',{'data-discount-end':p.slug});
+      if(p.discount_until){
+        const end=new Date(p.discount_until);
+        if(Number.isFinite(end.getTime()))expires.value=new Date(end.getTime()-end.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      }
+      row.append(controls);
+      const previewText=document.createElement('div');previewText.className='discount-preview';previewText.setAttribute('aria-live','polite');
+      row.append(previewText);
+      for(const input of [regular,rate,expires])input.addEventListener('input',()=>previewDiscount(row));
+      previewDiscount(row);fields.append(row);
       const card=document.createElement('article'),img=document.createElement('img'),name=document.createElement('b'),tag=document.createElement('small');
-      img.src=p.image;img.alt=p.name;name.textContent=p.name;tag.textContent=p.active?'PUBLISHED':'HIDDEN';
+      img.src=p.image;img.alt=p.name;name.textContent=p.name;
+      tag.textContent=(p.discount_percent>0?'DISKON -'+p.discount_percent+'% · ':'')+(p.active?'PUBLISHED':'HIDDEN');
       card.append(img,name,tag);preview.append(card);
     }
   }
@@ -123,9 +158,23 @@
       e.preventDefault();const button=$('save-store');button.disabled=true;
       try {
         const prices={};
-        document.querySelectorAll('#store-price-fields [data-price-tool]').forEach(input=>{const v=input.value.trim();prices[input.dataset.priceTool]=v?Number(v):null;});
-        const result=await api('/api/admin/store',{method:'POST',data:{discordUrl:$('store-discord').value.trim(),whatsappNumber:$('store-whatsapp').value.trim(),note:$('store-note').value.trim(),prices}});
-        state.store=result.settings;for(const p of state.products||[])p.price_daily=prices[p.slug];renderStore();notice('Storefront berhasil diperbarui.');
+        const discounts={};
+        document.querySelectorAll('#store-price-fields .discount-editor').forEach(row=>{
+          const priceInput=row.querySelector('[data-price-tool]'),rateInput=row.querySelector('[data-discount-tool]'),endInput=row.querySelector('[data-discount-end]');
+          const slug=priceInput.dataset.priceTool;
+          prices[slug]=priceInput.value.trim()?Number(priceInput.value):null;
+          const percent=Number(rateInput.value||0);
+          const endsAt=endInput.value?new Date(endInput.value).toISOString():null;
+          discounts[slug]={percent,endsAt};
+        });
+        const result=await api('/api/admin/store',{method:'POST',data:{discordUrl:$('store-discord').value.trim(),whatsappNumber:$('store-whatsapp').value.trim(),note:$('store-note').value.trim(),prices,discounts}});
+        state.store=result.settings;
+        for(const p of state.products||[]){
+          p.price_daily=prices[p.slug];
+          p.discount_percent=discounts[p.slug].percent;
+          p.discount_until=discounts[p.slug].endsAt;
+        }
+        renderStore();notice('Harga dan diskon produk berhasil diperbarui.');
       }catch(err){notice(err.message,true);}finally{button.disabled=false;}
     });
     $('action-bind').onclick=()=>{const id=prompt('Tempel Device ID (bmdev_...):',state.chosen?.deviceId||'bmdev_');if(id!==null)action('bind-device',{deviceId:id.trim()});};
@@ -135,7 +184,7 @@
     $('action-revoke').onclick=()=>{const restore=state.chosen?.status==='revoked';action(restore?'restore':'revoke',{},restore?'Aktifkan kembali license?':'Revoke license ini? Pengguna tidak bisa validasi lagi.');};
   }
   async function boot(){wire();try{const me=await api('/api/admin/me');$('admin-display').textContent=me.username;unlock();await loadAll();}catch{lock();}
-    setInterval(()=>{if(!$('shell').classList.contains('hidden')&&document.visibilityState==='visible'&&!state.loading)loadAll();},45000);
+    setInterval(()=>{if(!$('shell').classList.contains('hidden')&&document.visibilityState==='visible'&&!state.loading&&state.tab!=='store')loadAll();},45000);
   }
   boot();
 })();
