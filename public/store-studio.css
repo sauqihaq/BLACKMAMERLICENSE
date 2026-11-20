@@ -28,11 +28,10 @@ button, summary { cursor: pointer }
 .wordmark img { object-fit: contain }
 .wordmark small { display: block; margin-top: 4px; font: 650 .75rem monospace; letter-spacing: .29em; color: #b6acb4 }
 nav { gap: clamp(1.3rem, 3vw, 3rem) }
-nav a, .admin-link, .text-link { font-size: .94rem; font-weight: 600 }
+nav a, .text-link { font-size: .94rem; font-weight: 600 }
 nav a { padding-block: .7rem; color: #c2bec6 }
 nav a:hover, .text-link:hover, footer a:hover { color: var(--red) }
-.admin-link, .secondary { background: #1c191f; border: 1px solid #43373f; border-radius: .65rem }
-.admin-link { padding: .65rem 1rem }
+.secondary { background: #1c191f; border: 1px solid #43373f; border-radius: .65rem }
 .hero { position: relative; isolation: isolate; overflow: hidden; border-bottom: 1px solid #40232d; background: radial-gradient(ellipse at 78% 47%, #310c16, transparent 49%), #0a090c }
 .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .5; background-image: linear-gradient(#79435930 1px, transparent 1px), linear-gradient(90deg, #79435930 1px, transparent 1px); background-size: 46px 46px; mask-image: linear-gradient(110deg, transparent 20%, black 84%) }
 .hero-inner { display: grid; grid-template-columns: 1fr 1fr; align-items: center; min-height: clamp(460px, 39vw, 570px) }
@@ -48,7 +47,7 @@ h1 em { font-style: normal; color: #ff6079; background: linear-gradient(105deg,#
 .button, .card-order, .card-details { display: inline-flex; justify-content: center; align-items: center; gap: .65rem; min-height: 46px; padding: .7rem 1.1rem; border-radius: .65rem; font-size: .94rem; font-weight: 650; color: white }
 .primary, .card-order { background: linear-gradient(120deg,#dd153b,#b71031); border: 1px solid #ef4763; box-shadow: inset 0 1px #ff8b9c42, 0 6px 24px #d60e341a }
 .primary:hover, .card-order:hover { background: #e01b41 }
-.secondary:hover, .admin-link:hover, .card-details:hover { background: #30242c }
+.secondary:hover, .card-details:hover { background: #30242c }
 .grid-icon { height: 6px; width: 6px; background: white; box-shadow: 8px 0 white, 0 8px white, 8px 8px white; margin: -8px 8px 0 0; border-radius: 1px }
 .hero-art { align-self: stretch; position: relative; display: grid; place-items: center; min-width: 0 }
 .hero-art img { position: absolute; height: 106%; width: 110%; object-fit: contain; bottom: -5%; mix-blend-mode: lighten; mask-image: linear-gradient(black 82%, transparent 100%) }
