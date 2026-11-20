@@ -1,0 +1,53 @@
+/**
+ * Pure helpers for website-driven BLACKMAMERSTUDIO WA order flow.
+ * Never derive the payable total from customer-supplied WhatsApp text.
+ */
+export const MAX_DAYS=3650;
+export function clean(value,max=100){
+ return String(value??'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max);
+}
+export function formatRupiah(n){
+ return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n);
+}
+export function parseDuration(message){
+ const m=/^(?:durasi\s+)?(\d{1,4})\s*(?:hari)?$/i.exec(clean(message,50));
+ if(!m)return null;
+ const days=Number(m[1]);
+ return Number.isSafeInteger(days)&&days>=1&&days<=MAX_DAYS?days:null;
+}
+export function priceFor(product,days){
+ const value=Number(product?.price);
+ if(!Number.isSafeInteger(days)||days<1||days>MAX_DAYS||!Number.isSafeInteger(value)||value<1000)
+   return null;
+ const total=value*days;
+ return Number.isSafeInteger(total)?total:null;
+}
+export function matchProductFromWebsite(message,catalog){
+ const body=clean(message,1300).toLocaleLowerCase('id-ID');
+ if(!body.includes('blackmamerstudio')||!body.includes('mau pesan'))return null;
+ const products=[...(catalog||[])].filter(p=>p?.name&&p?.slug).sort((a,b)=>b.name.length-a.name.length);
+ const selected=products.find(p=>body.includes('mau pesan '+String(p.name).toLocaleLowerCase('id-ID')+'.'));
+ if(!selected)return null;
+ const name=/\bNama:\s*([^\n.]+)\./i.exec(message);
+ return {product:selected,customer:clean(name?.[1]||'Pelanggan',100)};
+}
+export function productBySlug(catalog,slug){
+ return (catalog||[]).find(p=>p?.slug===String(slug).trim().toLowerCase())||null;
+}
+export function validInstallLink(raw,websiteUrl){
+ try{
+  const site=new URL(websiteUrl),url=new URL(String(raw));
+  return url.protocol==='https:'&&url.origin===site.origin&&url.pathname==='/install'&&url.searchParams.has('token')&&
+    /^[a-f0-9]{64}$/i.test(url.searchParams.get('token')||'')?url.href:null;
+ }catch{return null;}
+}
+export function parseAdminCommand(raw){
+ const text=clean(raw,1400);
+ const m=/^!(orders|help|approve|reject)\b\s*([\s\S]*)$/i.exec(text);
+ if(!m)return null;
+ const op=m[1].toLowerCase(),args=m[2].trim();
+ if(op==='orders'||op==='help')return {op};
+ if(op==='reject'){const x=/^([A-F0-9]{8})$/i.exec(args);return x?{op,id:x[1].toUpperCase()}:null;}
+ const x=/^([A-F0-9]{8})\s+(https:\/\/\S+)$/i.exec(args);
+ return x?{op,id:x[1].toUpperCase(),url:x[2]}:null;
+}
