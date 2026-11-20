@@ -17,7 +17,7 @@ const repo=path.resolve(__dirname,'..');
 const zipPath=path.join(repo,'public/downloads/BlackMamer-v4.zip');
 const rootName='BlackMamer-v4';
 const namesToObfuscate=['background.js','extension.js','editor.js','content.js','page.js','offscreen.js','popup.js','studio.js','bm-theme.js','bm-site-bridge.js','bm-install.js','lint.js','cache.js'];
-const protectedFiles=['manifest.json','background.js','extension.js','editor.js','content.js','page.js','popup.html','popup.js','dashboard.html','studio.js','studio.css','bm-theme.js','bm-theme.css','style.css','editor.css','bm-site-bridge.js','bm-install.js','bm-install.html','options.html','offscreen.js','offscreen.html','action.html','ask.html','userscript.html','bm-help.html','bm-help.css','images/icon128.png','images/blackmamer-original.png','bm-ui-lock.js','LICENSE-BLACKMAMERSTUDIO.txt','lint.js','cache.js'];
+const protectedFiles=['manifest.json','background.js','extension.js','editor.js','content.js','page.js','popup.html','popup.js','dashboard.html','studio.js','studio.css','bm-theme.js','bm-theme.css','style.css','editor.css','bm-site-bridge.js','bm-install.js','bm-install.html','options.html','offscreen.js','offscreen.html','action.html','ask.html','userscript.html','bm-help.html','bm-help.css','images/icon128.png','images/blackmamer-original.png','LICENSE-BLACKMAMERSTUDIO.txt','lint.js','cache.js'];
 const TMP=fs.mkdtempSync(path.join(os.tmpdir(),'bm-release-'));
 const root=path.join(TMP,rootName);
 function read(file){return fs.readFileSync(path.join(root,file),'utf8');}
@@ -214,9 +214,13 @@ function build(){
   cp.execFileSync('unzip',['-qq',zipPath,'-d',TMP]);
   if(!fs.existsSync(path.join(root,'manifest.json')))throw Error('Original ZIP layout unexpected');
   if(fs.existsSync(path.join(root,'bm-brand-seal.json'))){console.log('Already signed; preserving ZIP.');return;}
-  let bg=read('background.js');
+  const {privateKey,publicKey}=crypto.generateKeyPairSync('ec',{namedCurve:'prime256v1'});
+  const key=publicKey.export({type:'spki',format:'der'}).toString('base64');
+  // Integrity enforcement is part of the engine, not an obvious removable extension module.
+  // The public verification key is injected before obfuscation; only the key pair's public half ships.
+  let bg=guard.replace('__PUBLIC_SPki_B64__',key)+'\n'+read('background.js');
   bg=replaceExact(bg,'/* BlackMamer owned UI and licensed delivery. Source is never returned to the store bridge. */',
-    "/* BlackMamer owned UI and licensed delivery. Source is never returned to the store bridge. */\nimportScripts('bm-brand-guard.js');\nconst bmBrandReady=BMBrandGuard.verify(true);",'background.js');
+    "/* BlackMamer owned UI and licensed delivery. Source is never returned to the store bridge. */\nconst bmBrandReady=BMBrandGuard.verify(true);",'background.js');
   bg=replaceExact(bg,'async function bmReady(){await bmStateReady;',
     'async function bmReady(){await bmBrandReady;await BMBrandGuard.verify();await bmStateReady;','background.js');
   bg=replaceExact(bg,' const run=async()=>{\n  const own=sender.id',
@@ -229,8 +233,8 @@ function build(){
     "  case 'brand-check':return {verified:true,brand:'BLACKMAMERSTUDIO'};\n  case 'state':{let scriptsAllowed=false;",'background.js');
   write('background.js',bg);
   const manifest=JSON.parse(read('manifest.json'));
-  Object.assign(manifest,{version:'5.6.4',version_name:'4.3.0',name:'BlackMamer',short_name:'BlackMamer',
-    description:'BLACKMAMERSTUDIO official V4.3 obfuscated and digitally signed licensed build.'});
+  Object.assign(manifest,{version:'5.6.5',version_name:'4.4.0',name:'BlackMamer',short_name:'BlackMamer',
+    description:'BLACKMAMERSTUDIO official V4.4 obfuscated and digitally signed licensed build.'});
   manifest.action.default_title='BLACKMAMERSTUDIO — BMscript Manager · Official Build';
   write('manifest.json',JSON.stringify(manifest,null,2)+'\n');
   for(const [name,needle,script] of [
@@ -239,16 +243,15 @@ function build(){
     let html=read(name);
     const badge='<span class="bm-signed-stamp" title="Official BLACKMAMERSTUDIO build">BLACKMAMERSTUDIO · SIGNED BUILD</span>';
     html=replaceExact(html,needle,name==='popup.html'?badge+needle:needle+badge,name);
-    html=replaceExact(html,script,'<script src="bm-ui-lock.js" defer></script>'+script,name);
+    // UI lock logic runs within the already referenced popup.js/studio.js.
     write(name,html);
   }
-  write('popup.js',read('popup.js').replace("catch(e){$('popup-info').textContent=e.message;}","catch(e){$('popup-info').textContent=e.message;if(/BLACKMAMERSTUDIO|integritas|brand/i.test(e.message)){$('popup-toggle').disabled=true;}}"));
+  write('popup.js',read('popup.js').replace("catch(e){$('popup-info').textContent=e.message;}","catch(e){$('popup-info').textContent=e.message;if(/BLACKMAMERSTUDIO|integritas|brand/i.test(e.message)){$('popup-toggle').disabled=true;}}")+'\n'+uiLock);
+  write('studio.js',read('studio.js')+'\n'+uiLock);
   write('studio.css',read('studio.css')+'\n.bm-signed-stamp{display:inline-block;font-size:9px;letter-spacing:.12em;font-weight:850;color:#d89aa9;background:#2b2029;border:1px solid #744454;border-radius:7px;padding:5px 8px;margin:4px 12px 6px 0}\n.bm-integrity-overlay{position:fixed!important;inset:0!important;background:#080a0cf7!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px!important;color:#eee!important;font:14px/1.65 system-ui,sans-serif!important}.bm-integrity-box{max-width:450px;padding:28px;background:#241b24;border:1px solid #b35a6b;border-radius:18px;box-shadow:0 0 65px #000b}.bm-integrity-box strong{display:block;font-size:17px;letter-spacing:.04em;color:#ffb4c4;margin-bottom:10px}.bm-integrity-box p{color:#d8b6c2;margin:0 0 10px}.bm-integrity-box small{color:#ab8e9c}\n');
-  const {privateKey,publicKey}=crypto.generateKeyPairSync('ec',{namedCurve:'prime256v1'});
-  const key=publicKey.export({type:'spki',format:'der'}).toString('base64');
-  write('bm-brand-guard.js',guard.replace('__PUBLIC_SPki_B64__',key));
-  write('bm-ui-lock.js',uiLock);write('LICENSE-BLACKMAMERSTUDIO.txt',notice);
-  write('README.md',read('README.md')+'\n\n## Official BLACKMAMERSTUDIO v4.3\nThis official extension uses a signed asset manifest and static MV3-compatible JavaScript obfuscation. It checks branding, engine/UI source and 32 assets at startup and regularly; invalid assets disable the extension. Existing website-bound product licenses are preserved; no second key entry is needed. Signing private key is not included in the distribution. Integrity checks can be bypassed by an adversary controlling local files, so license enforcement must remain server-side.\n');
+  // Do not ship any standalone bm-ui-lock or bm-brand-guard file.
+  write('LICENSE-BLACKMAMERSTUDIO.txt',notice);
+  write('README.md',read('README.md')+'\n\n## Official BLACKMAMERSTUDIO v4.4\nThis official extension uses a signed asset manifest and static MV3-compatible JavaScript obfuscation. It checks branding, engine/UI source and 32 assets at startup and regularly; invalid assets disable the extension. Existing website-bound product licenses are preserved; no second key entry is needed. Signing private key is not included in the distribution. Integrity checks can be bypassed by an adversary controlling local files, so license enforcement must remain server-side.\n');
   renameUiTerminology();
   let total=0;
   for(const name of namesToObfuscate){if(!fs.existsSync(path.join(root,name)))continue;
@@ -257,7 +260,7 @@ function build(){
   }
   const sha=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
   const files={};for(const f of protectedFiles){if(!fs.existsSync(path.join(root,f)))throw Error('Missing signed asset '+f);files[f]=sha(f);}
-  const payload={brand:'BLACKMAMERSTUDIO',product:'BlackMamer',version:'5.6.4',versionName:'4.3.0',policy:'official-asset-integrity-v1',files};
+  const payload={brand:'BLACKMAMERSTUDIO',product:'BlackMamer',version:'5.6.5',versionName:'4.4.0',policy:'official-asset-integrity-v1',files};
   const stable=v=>Array.isArray(v)?'['+v.map(stable).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}':JSON.stringify(v);
   const signature=crypto.sign('sha256',Buffer.from(stable(payload)),{key:privateKey,dsaEncoding:'ieee-p1363'}).toString('base64');
   if(!crypto.verify('sha256',Buffer.from(stable(payload)),{key:publicKey,dsaEncoding:'ieee-p1363'},Buffer.from(signature,'base64')))throw Error('Signature self-test failed');
@@ -265,6 +268,15 @@ function build(){
   cp.execFileSync('zip',['-qr','-9',zipPath,rootName],{cwd:TMP});
   const zip=cp.execFileSync('unzip',['-Z','-1',zipPath],{encoding:'utf8'});
   if(!zip.includes(rootName+'/bm-brand-seal.json'))throw Error('Built ZIP missing signature');
-  console.log(`BLACKMAMERSTUDIO V4.3 verified and staged: obfuscated ${total} string literals, ${Object.keys(files).length} signed resources, ZIP ${fs.statSync(zipPath).size} bytes.`);
+  for(const forbidden of ['bm-ui-lock.js','bm-brand-guard.js']){
+    if(zip.includes(rootName+'/'+forbidden))throw Error('Standalone protection module leaked: '+forbidden);
+  }
+  const archivedBackground=cp.execFileSync('unzip',['-p',zipPath,rootName+'/background.js'],{encoding:'utf8'});
+  if(!archivedBackground.includes('bm-brand-seal.json'))throw Error('Integrated verification missing from engine');
+  const seal=JSON.parse(cp.execFileSync('unzip',['-p',zipPath,rootName+'/bm-brand-seal.json'],{encoding:'utf8'}));
+  if(seal.payload.files['background.js']!==crypto.createHash('sha256').update(archivedBackground).digest('hex'))
+    throw Error('Protected engine hash mismatch');
+  if(!seal.payload.files['popup.js']||!seal.payload.files['studio.js'])throw Error('Embedded UI verification assets not signed');
+  console.log(`BLACKMAMERSTUDIO V4.4 verified and staged: obfuscated ${total} string literals, ${Object.keys(files).length} signed resources, ZIP ${fs.statSync(zipPath).size} bytes.`);
 }
 try{build();}finally{fs.rmSync(TMP,{recursive:true,force:true});}
