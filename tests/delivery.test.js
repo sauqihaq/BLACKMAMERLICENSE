@@ -71,7 +71,7 @@ test('private delivery with real PostgreSQL semantics',async t=>{
   // A legacy / template script is not eligible to issue new access.
   await query("INSERT INTO bm_product_scripts(id,tool_slug,name,version,matches,source_cipher,source_hash,source_kind)VALUES($1,'meshy','OLD TEMPLATE','0.1','[]'::jsonb,$2,$3,'legacy')",
     [randomUUID(),d.seal(source),d.hash(source)]);
-  await assert.rejects(d.issueAccess({tool:'meshy',customer:'Test buyer',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Upload userscript/);
+  await assert.rejects(d.issueAccess({tool:'meshy',customer:'Test buyer',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Upload BMscript/);
   await d.saveProduct('meshy',source.replace('Test Licensed Tool','Meshy Manual Upload'));
   const access=await d.issueAccess({tool:'meshy',customer:'Test buyer',plan:'Personal',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()});
   assert.equal(access.tool,'meshy');assert.ok(!('key' in access));

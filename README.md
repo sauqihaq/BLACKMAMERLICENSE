@@ -1,6 +1,6 @@
 # BLACKMAMERSTUDIO — Tripo3D License Control V12 (FULL VERCEL)
 
-**Satu project Vercel untuk website admin, API aktivasi/validasi, userscript installer, dan activity dashboard.** Database PostgreSQL memakai **Neon melalui Vercel Marketplace** (dikelola dari dashboard Vercel). Cloudflare Workers/D1 tidak lagi diperlukan.
+**Satu project Vercel untuk website admin, API aktivasi/validasi, BMscript installer, dan activity dashboard.** Database PostgreSQL memakai **Neon melalui Vercel Marketplace** (dikelola dari dashboard Vercel). Cloudflare Workers/D1 tidak lagi diperlukan.
 
 ## 1. Isi dan fitur
 
@@ -9,7 +9,7 @@
 | `/` | Halaman landing license server |
 | `/admin` | Website admin premium hitam/silver; login username + password |
 | `/api/health` | Cek status database |
-| `/api/install` | **Download Userscript V12 yang URL API-nya otomatis terisi domain Vercel yang sedang dibuka** |
+| `/api/install` | **Download BMscript V12 yang URL API-nya otomatis terisi domain Vercel yang sedang dibuka** |
 | `/api/license/activate` | Aktivasi pertama, otomatis bind Device ID pengguna |
 | `/api/license/validate` | Validasi online (menolak revoked, expired, perangkat berbeda) |
 | `/api/admin/summary` | Statistik lisensi, device, pemakaian 24 jam |
@@ -55,7 +55,7 @@ ADMIN_SESSION_SECRET=secret_random_panjang_minimum_32_karakter
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-**Jangan tempel real password/secret ke file repository atau ke userscript.** Setelah menambahkan env, klik **Redeploy** di Vercel agar function yang aktif mendapat env terbaru.
+**Jangan tempel real password/secret ke file repository atau ke BMscript.** Setelah menambahkan env, klik **Redeploy** di Vercel agar function yang aktif mendapat env terbaru.
 
 ### D. Login admin dan buat key
 
@@ -71,7 +71,7 @@ https://nama-project.vercel.app/admin
 4. Setelah submit, **salin license key sekali itu juga**. Key plaintext hanya dikirim sebagai respons ke admin ketika dibuat; database hanya menyimpan hash SHA-256 dan lima karakter terakhir.
 5. Kirim key melalui jalur privat ke pelanggan.
 
-### E. Install Userscript (otomatis terhubung)
+### E. Install BMscript (otomatis terhubung)
 
 Buka URL hasil deploy:
 
@@ -79,9 +79,9 @@ Buka URL hasil deploy:
 https://nama-project.vercel.app/api/install
 ```
 
-Download/userscript yang dihasilkan **sudah menggunakan URL Vercel lu**. Install `.user.js` itu ke Tampermonkey. Buka `https://studio.tripo3d.ai/`, isi **Nama pengguna** dan **License Key** lalu Activate.
+Download/BMscript yang dihasilkan **sudah menggunakan URL Vercel lu**. Install `.user.js` itu ke Tampermonkey. Buka `https://studio.tripo3d.ai/`, isi **Nama pengguna** dan **License Key** lalu Activate.
 
-**Wajib nonaktifkan userscript V10/V11 lama** agar tombol UI tidak dobel dan tidak ada versi yang bisa dipakai tanpa license V12.
+**Wajib nonaktifkan BMscript V10/V11 lama** agar tombol UI tidak dobel dan tidak ada versi yang bisa dipakai tanpa license V12.
 
 Alternatif manual: file `userscript/BlackMamer_Tripo_Licensed_v12.user.js` mengandung `LICENSE_CONFIG.API_BASE_URL = 'https://GANTI-PROJECT.vercel.app'`. Ganti placeholder dengan domain Vercel dan install. Pengunduhan melalui `/api/install` **lebih mudah**.
 
@@ -100,7 +100,7 @@ Admin memakai cookie HTTP-only, SameSite=Strict, verifikasi CSRF, HMAC sesi 8 ja
 - Ketika pengguna pertama kali aktifkan key, backend mengikat Device ID secara **atomik** di database PostgreSQL. Key yang sama dari browser lain otomatis ditolak.
 - Download dan konversi lokal membutuhkan validasi server; bila jaringan/API mati, fitur diblokir (fail-closed).
 - Admin bisa Revoke, Restore, Bind Device, Reset Device, Set Expiry, dan memantau log penggunaan.
-- **Batas keamanan:** orang yang bisa mengubah/menjalankan JavaScript sendiri tetap dapat melewati pembatasan UI pada userscript lokal. Untuk proteksi lebih tinggi, proses yang benar-benar rahasia harus diletakkan di server. Pengguna juga dapat menyalin Device ID atau memberikan nama palsu.
+- **Batas keamanan:** orang yang bisa mengubah/menjalankan JavaScript sendiri tetap dapat melewati pembatasan UI pada BMscript lokal. Untuk proteksi lebih tinggi, proses yang benar-benar rahasia harus diletakkan di server. Pengguna juga dapat menyalin Device ID atau memberikan nama palsu.
 
 ## 5. Biaya dan catatan migrasi
 
@@ -117,7 +117,7 @@ npm.cmd test
 npm.cmd run check
 ```
 
-Pengujian lokal tanpa `DATABASE_URL` hanya memeriksa logika, instalasi userscript, wiring frontend, dan struktur project. Pengujian database dan website hidup membutuhkan deployment Neon/Vercel. Cek `/api/health` mengembalikan `database: "connected"` sesudah konfigurasi.
+Pengujian lokal tanpa `DATABASE_URL` hanya memeriksa logika, instalasi BMscript, wiring frontend, dan struktur project. Pengujian database dan website hidup membutuhkan deployment Neon/Vercel. Cek `/api/health` mengembalikan `database: "connected"` sesudah konfigurasi.
 
 
 ## Storefront V13 (multi-tool, manual payment)
@@ -193,5 +193,5 @@ Local Chrome integration was also checked with a separate test extension copy an
 - **Admin → Store Settings → Product Catalog** sekarang menyediakan tombol **+ Tambah Produk** dan tombol **Edit nama / gambar** di setiap produk.
 - Saat menambah produk, isi nama, Product ID/slug unik (otomatis disarankan dari nama), deskripsi, serta pilihan ilustrasi; produk langsung tersimpan di Neon dan ditampilkan di website jika aktif.
 - Saat mengedit produk, nama, deskripsi dan gambar dapat diperbarui tanpa mengganti `slug` (identifier tetap). Script yang sudah di-upload, harga, diskon, license, dan link install tetap tersambung ke ID lama.
-- Setelah produk baru dibuat, atur harga/diskon di Store Settings; upload userscript lewat **Produk & Akses** sebelum menerbitkan akses untuk pelanggan.
+- Setelah produk baru dibuat, atur harga/diskon di Store Settings; upload BMscript lewat **Produk & Akses** sebelum menerbitkan akses untuk pelanggan.
 - Form tambah produk lama di **Produk & Akses** tetap tersedia. Hanya admin yang login dan lolos pemeriksaan origin boleh membuat atau mengubah produk.
