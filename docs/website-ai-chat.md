@@ -10,7 +10,7 @@ Default widget tetap bekerja sebagai **asisten panduan/FAQ** saat belum ada API 
 2. Buka Vercel Dashboard → BLACKMAMERLICENSE → Settings → Environment Variables.
 3. Tambahkan nama **GEMINI_API_KEY**, isi API key secara privat. Pilih Production (dan Preview jika dibutuhkan).
 4. Klik Redeploy di Vercel. Jangan pernah memasukkan key ke frontend, GitHub, file publik, atau membagikannya di chat.
-5. Widget akan memakai Gemini 2.5 Flash-Lite via endpoint server-side /api/ai-chat (rewrite ke health function existing) dengan batas input/output. Jika key belum disetel, kuota habis, atau provider gagal, asisten FAQ otomatis tetap menjawab, dengan label mode yang jelas.
+5. Widget akan memakai Gemini 3.5 Flash-Lite via endpoint server-side /api/ai-chat (rewrite ke health function existing) dengan batas input/output. Jika key belum disetel, kuota habis, atau provider gagal, asisten FAQ otomatis tetap menjawab, dengan label mode yang jelas.
 
 Model dan batas gratis dapat berubah; lihat dokumentasi harga resmi https://ai.google.dev/gemini-api/docs/pricing dan kuota dashboard proyek kamu. Tidak ada jaminan layanan tanpa biaya tanpa memeriksa tier/billing project. Penggunaan komersial website juga harus mengikuti syarat hosting Vercel yang dipakai.
 
@@ -21,3 +21,7 @@ Model dan batas gratis dapat berubah; lihat dokumentasi harga resmi https://ai.g
 - Request origin harus sesuai domain, input maksimal 900 karakter, riwayat maksimal 8 turn, output model dibatasi, dan pembatasan per-IP in-memory best effort (bukan proteksi DDoS atau rate-limit global).
 - AI tidak dapat melihat status order atau memverifikasi transfer dan tidak dapat menerbitkan atau mengubah lisensi. Untuk bantuan pribadi arahkan ke chat admin WhatsApp.
 - Jika perlu tingkat kontrol abuse untuk trafik besar, pasang rate-limit persisten/provider protection; limit lokal Vercel tidak dibagi lintas instance.
+
+## Jika tetap fallback setelah Redeploy
+
+Saat Gemini mengembalikan error, bubble akan menunjukkan kode penyebab aman tanpa membocorkan API key: 401 (key ditolak), 403 (proyek tidak punya akses/free tier), 404 (model tidak ada untuk proyek), 429 (kuota habis atau nol), 400 (permintaan ditolak). Periksa Vercel Logs untuk kode `[BM AI CHAT] Gemini`, kemudian buka Google AI Studio Rate limits untuk status proyek. Jika status 403 karena free tier tidak tersedia, mengganti kode frontend tidak dapat mengatasi pembatasan proyek. Tidak perlu mengaktifkan billing hanya untuk menguji website.

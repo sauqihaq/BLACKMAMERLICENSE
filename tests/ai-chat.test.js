@@ -23,7 +23,7 @@ test('AI widget is mounted bottom-right without changing existing checkout',()=>
  assert.match(html,/\/store\.js/);
 });
 test('AI prompt prevents ungrounded payment and secret requests',()=>{
- assert.equal(AI_MODEL,'gemini-2.5-flash-lite');
+ assert.equal(AI_MODEL,'gemini-3.5-flash-lite');
  assert.match(SYSTEM_PROMPT,/tidak pernah diverifikasi otomatis/);
  assert.match(SYSTEM_PROMPT,/Jangan mengarang harga/);
  assert.equal(containsSensitiveInput('https://example.com/install#token='+'a'.repeat(64)),true);
@@ -64,4 +64,26 @@ test('API enforces POST, same origin and no secrets',async()=>{
 test('vercel serves AI endpoint via rewrite',()=>{
  const config=JSON.parse(readFileSync('vercel.json','utf8'));
  assert.ok(config.rewrites.some(r=>r.source==='/api/ai-chat'&&r.destination==='/api/health?view=chat'));
+});
+
+test('fallback status provides actionable diagnosis without leaking API key',async()=>{
+ const base={method:'POST',headers:{origin:'https://blackmamerlicense.vercel.app',host:'blackmamerlicense.vercel.app','content-type':'application/json'},body:{message:'TUTOR'}};
+ const previous=process.env.GEMINI_API_KEY,original=globalThis.fetch;
+ try{
+  process.env.GEMINI_API_KEY='PRIVATE_TEST_KEY_DO_NOT_EXPOSE';
+  for(const [http,reason] of [[400,'INVALID_REQUEST'],[403,'PROJECT_ACCESS_DENIED'],[404,'MODEL_UNAVAILABLE'],[429,'QUOTA_EXCEEDED'],[503,'PROVIDER_UNAVAILABLE']]){
+   globalThis.fetch=async()=>({ok:false,status:http});
+   const result=mockRes();
+   await handler(base,result);
+   assert.equal(result.statusCode,200);
+   assert.equal(result.body.reason,reason);
+   assert.equal(result.body.providerStatus,http);
+   assert.equal(result.body.mode,'faq');
+   assert.match(result.body.reply,/chrome:\/\/extensions/);
+   assert.ok(!JSON.stringify(result.body).includes('PRIVATE_TEST_KEY_DO_NOT_EXPOSE'));
+  }
+ }finally{
+  globalThis.fetch=original;
+  if(previous===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=previous;
+ }
 });
