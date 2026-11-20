@@ -91,7 +91,7 @@ test('private delivery with real PostgreSQL semantics',async t=>{
   await assert.rejects(d.issueAccess({tool:'meshy',customer:'Bad buyer',days:0,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Masa aktif/);
 
   assert.equal((await d.claimLink(access.token,device(),proof())).tool_slug,'meshy');
-  await assert.rejects(d.issueAccess({tool:'unknown',customer:'Test',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Upload userscript/);
+  await assert.rejects(d.issueAccess({tool:'unknown',customer:'Test',days:7,linkExpiresAt:new Date(Date.now()+86400000).toISOString()}),/Upload BMscript/);
  });
  await t.test('admin creates and renames a product without changing its license/script identity',async()=>{
   const headers={host:'localhost',origin:'http://localhost','x-bm-admin':'1',cookie:'bm_admin_session='+createSession('admin')};
