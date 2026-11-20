@@ -1,13 +1,18 @@
 (function(){
 'use strict';
 const music = document.getElementById('background-music');
-// Native autoplay takes precedence. A tap or keyboard-activated link can start it if blocked.
 if (music && music.paused) {
+  const gestures = new AbortController();
+  const options = { capture: true, passive: true, signal: gestures.signal };
   const startMusic = () => {
     if (music.paused) music.play().catch(() => {});
   };
-  document.addEventListener('click', startMusic, true);
-  music.addEventListener('play', () => document.removeEventListener('click', startMusic, true), { once: true });
+  // Try once during scrolling. Browsers that require activation can retry at touchend or on a key or click.
+  document.addEventListener('scroll', startMusic, { ...options, once: true });
+  for (const event of ['touchend', 'keydown', 'click']) {
+    document.addEventListener(event, startMusic, options);
+  }
+  music.addEventListener('play', () => gestures.abort(), { once: true });
 }
 const defaultCatalog=[
 {slug:'tripo',name:'Tripo3D Studio',eyebrow:'MODEL · CONVERTER',description:'Manajemen file 3D dan konversi lokal untuk aset yang dimiliki atau diizinkan.',features:['GLB / GLTF','Konversi lokal','Browser extension'],image:'/assets/tripo.svg'},
