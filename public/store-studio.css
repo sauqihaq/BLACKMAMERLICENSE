@@ -44,6 +44,10 @@ h1 { margin: 1.2rem 0 1.3rem; font-size: clamp(3.6rem, 6.85vw, 6.65rem); letter-
 h1 em { font-style: normal; color: #ff6079; background: linear-gradient(105deg,#ff3457 2%,#ff8b9a 48%,#eee0e4 92%); background-clip: text; -webkit-text-fill-color: transparent }
 .lead { max-width: 29rem; color: #bdb6c0; font-size: 1.06rem; line-height: 1.65 }
 .actions { flex-wrap: wrap; gap: .65rem; margin-top: 1.65rem }
+.soundtrack { margin: 1.25rem 0 0; max-width: 24rem }
+.soundtrack figcaption { margin-bottom: .4rem; font-size: .9rem; font-weight: 650 }
+.soundtrack figcaption span { color: var(--muted); font-weight: 400 }
+.soundtrack audio { display: block; width: 100%; height: 44px }
 .button, .card-order, .card-details { display: inline-flex; justify-content: center; align-items: center; gap: .65rem; min-height: 46px; padding: .7rem 1.1rem; border-radius: .65rem; font-size: .94rem; font-weight: 650; color: white }
 .primary, .card-order { background: linear-gradient(120deg,#dd153b,#b71031); border: 1px solid #ef4763; box-shadow: inset 0 1px #ff8b9c42, 0 6px 24px #d60e341a }
 .primary:hover, .card-order:hover { background: #e01b41 }
