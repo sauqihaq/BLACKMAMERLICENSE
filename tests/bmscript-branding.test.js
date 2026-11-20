@@ -9,6 +9,6 @@ test('public website uses BMscript branding while preserving standard script met
  assert.match(a,/FILE BMscript/);assert.match(b,/LICENSED BMscript/);
  assert.match(b,/Install BMscript/);assert.match(c,/memasang BMscript/);
  assert.match(engine,/Metadata BMscript/);assert.match(engine,/==UserScript==/);
- assert.match(a,/\\.user\\.js/);
+ assert.ok(a.includes('.user.js'),'Chrome-compatible .user.js format remains supported');
  for(const file of [a,b,c])assert.doesNotMatch(file,/\buserscripts?\b/i);
 });
