@@ -36,3 +36,12 @@ test('Puppeteer browser install is part of the Wispbyte npm install flow',()=>{
  const pkg=JSON.parse(readFileSync(new URL('../whatsapp-bot/package.json',import.meta.url),'utf8'));
  assert.equal(pkg.scripts.postinstall,'npx puppeteer browsers install chrome');
 });
+
+
+test('Wispbyte QR troubleshooting reports authentication and connection states',()=>{
+ const source=readFileSync(new URL('../whatsapp-bot/index.js',import.meta.url),'utf8');
+ for(const event of ['authenticated','loading_screen','change_state','auth_failure','disconnected','ready'])
+   assert.ok(source.includes(`client.on('${event}'`),`missing event ${event}`);
+ assert.match(source,/authTimeoutMs:120000/);
+ assert.match(source,/protocolTimeout:120000/);
+});

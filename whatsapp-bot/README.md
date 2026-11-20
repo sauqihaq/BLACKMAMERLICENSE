@@ -48,3 +48,13 @@ Dari **nomor ADMIN_WA_NUMBER** yang telah diatur, chat ke nomor WhatsApp Busines
 - **Mematikan PC berarti bot offline**; website Vercel tidak mati.
 - Nomor admin harus berbeda dari nomor bot supaya perintah admin bisa diterima sebagai pesan masuk.
 - Manual payment QRIS tidak otomatis memverifikasi mutasi. Pelanggan tidak perlu menyerahkan akses akun bank atau data kartu.
+
+
+## Diagnosa QR yang gagal terhubung / network timeout
+
+1. Uji login WhatsApp Business ke `web.whatsapp.com` di PC menggunakan jaringan HP yang berbeda. Kalau bisa di PC namun gagal di Wispbyte, kemungkinan masalah di Chromium/network/resource hosting.
+2. Jika Wispbyte menampilkan `[WA AUTHENTICATED]` tetapi **tidak** `WhatsApp bot READY`, proses sinkronisasi belum selesai. `[WA STATE]` dan `[WA LOADING]` membantu menunjukkan tahap gagal.
+3. Jika QR berulang tanpa `[WA AUTHENTICATED]`, pairing belum berhasil. Jangan paksa scan terus; pastikan QR terbaru dan periksa Linked Devices di HP.
+4. Server Wispbyte Free memiliki RAM 512 MB. `[WA WAITING]` hanya menampilkan penggunaan Node.js, **belum termasuk Chromium**; cek penggunaan RAM total di panel. Jika server restart/OOM, timeout lebih panjang tidak akan menyelesaikan batas memori.
+5. `authTimeoutMs=120000` dan Puppeteer `protocolTimeout=120000` memperpanjang waktu tunggu agar tersedia kesempatan pada server lambat, tetapi tidak menjamin QR sukses. Jangan hapus `.wwebjs_auth` saat masih ada sesi yang aktif.
+6. Karena bot menggunakan API WhatsApp Web tidak resmi, ada risiko pembatasan akun. Uji dengan nomor non-utama dan pastikan kebijakan hosting mengizinkan bot WhatsApp.

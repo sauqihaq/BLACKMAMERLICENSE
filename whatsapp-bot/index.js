@@ -17,7 +17,9 @@ const authDir=path.resolve(process.env.BOT_SESSION_DIR||'./.wwebjs_auth');
 const browserArgs=process.platform==='linux'?['--no-sandbox','--disable-setuid-sandbox']:[];
 const client=new Client({
  authStrategy:new LocalAuth({dataPath:authDir,clientId:'blackmamerstudio'}),
- puppeteer:{headless:true,args:browserArgs,...(process.env.CHROME_EXECUTABLE_PATH?{executablePath:process.env.CHROME_EXECUTABLE_PATH}:{})}
+ authTimeoutMs:120000,
+ puppeteer:{headless:true,args:browserArgs,protocolTimeout:120000,
+  ...(process.env.CHROME_EXECUTABLE_PATH?{executablePath:process.env.CHROME_EXECUTABLE_PATH}:{})}
 });
 let ready=false;
 const recentIds=new Set();
@@ -122,10 +124,24 @@ async function handleCustomer(msg){
  }
  return reply(msg,'Pesanan '+current.id+' sedang menunggu pemeriksaan admin. Jangan mengirim bukti berulang kali.');
 }
-client.on('qr',qr=>{console.log('\nScan QR menggunakan WhatsApp Business > Perangkat tertaut > Tautkan perangkat.');qrcode.generate(qr,{small:true});});
+let qrCount=0;
+client.on('qr',qr=>{qrCount++;
+ console.log('[WA QR] Menunggu scan. QR baru #'+qrCount+'. Jika sudah scan tetapi muncul QR lagi, login belum selesai.');
+ console.log('\nScan QR menggunakan WhatsApp Business > Perangkat tertaut > Tautkan perangkat.');
+ qrcode.generate(qr,{small:true});
+});
+client.on('authenticated',()=>console.log('[WA AUTHENTICATED] Sesi diterima. Menyiapkan WhatsApp Web...'));
+client.on('loading_screen',(percent,message)=>console.log('[WA LOADING]',percent, String(message||'').slice(0,100)));
+client.on('change_state',state=>console.log('[WA STATE]',state));
 client.on('ready',()=>{ready=true;console.log('[BLACKMAMERSTUDIO] WhatsApp bot READY. Website:',site);});
-client.on('auth_failure',m=>console.error('[WHATSAPP AUTH FAILED]',m));
+client.on('auth_failure',m=>console.error('[WHATSAPP AUTH FAILED]',String(m).slice(0,300)));
 client.on('disconnected',reason=>{ready=false;console.warn('[WHATSAPP DISCONNECTED]',reason);});
+const healthTimer=setInterval(()=>{
+ if(ready)return;
+ const mem=Math.round(process.memoryUsage().rss/(1024*1024));
+ console.log('[WA WAITING] Belum READY; Node.js RSS '+mem+' MB (belum termasuk Chromium). Periksa RAM total di panel Wispbyte.');
+},60000);
+healthTimer.unref?.();
 client.on('message',msg=>{
  const id=msg?.id?._serialized;
  if(!ready||msg.fromMe||!msg.from?.endsWith('@c.us')||seen(id))return;
