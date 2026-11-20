@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import qrcode from 'qrcode-terminal';
 import {Client} from './baileys-client.js';
 import {createStore} from './store.js';
-import {clean,formatRupiah,parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand} from './core.js';
+import {clean,formatRupiah,parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand,paymentCaption} from './core.js';
 
 const site=String(process.env.WEBSITE_URL||'https://blackmamerlicense.vercel.app').replace(/\/$/,'');
 const adminNumber=String(process.env.ADMIN_WA_NUMBER||'').replace(/\D/g,'');
@@ -92,17 +92,25 @@ async function handleCustomer(msg){
  if(!current)return; // Never auto-reply to unrelated personal WhatsApp messages.
  if(current.status==='choose_duration'){
   const days=parseDuration(body);
-  if(!days)return reply(msg,'Ketik *DURASI 7* (1 hingga 3650 hari).');
+  if(!days)return reply(msg,'Masukkan durasi dengan format *DURASI 7*, *DURASI 14*, atau *DURASI 30* (1–3650 hari).');
   const items=await catalog(),product=productBySlug(items,current.productSlug);
   const total=priceFor(product,days);
   if(total===null)return reply(msg,'Harga produk belum diatur di website. Hubungi admin sebelum melakukan pembayaran.');
+  const pricePerDay=Number(product.price);
+  const caption=paymentCaption({id:current.id,productName:product.name,pricePerDay,days,total});
   store.update(current.id,{days,total,status:'awaiting_proof'});
-  await reply(msg,'*RINCIAN PESANAN*\nID: '+current.id+'\nProduk: '+current.productName+'\nDurasi: '+days+' hari\nTotal: *'+formatRupiah(total)+'*\n\nLakukan pembayaran ke QR resmi yang dikirim admin, kemudian kirim *foto bukti pembayaran* di chat ini. Bukti akan ditinjau manual, bukan disetujui otomatis.');
   if(qrPath&&fs.existsSync(qrPath)){
-   await client.sendMessage(msg.from,{image:fs.readFileSync(qrPath),caption:'QR pembayaran BLACKMAMERSTUDIO. Pastikan nama penerima sebelum transfer.'});
+   try{
+    // Baileys sends the actual user-provided static QRIS photo with all details in one caption.
+    await client.sendMessage(msg.from,{image:fs.readFileSync(qrPath),caption});
+   }catch(e){
+    console.error('[QRIS SEND ERROR]',e?.message||e);
+    await reply(msg,'Maaf, gambar QRIS saat ini gagal dikirim. *Jangan transfer dulu.*\n\nPesanan: '+current.id+'\nTotal: *'+formatRupiah(total)+'*\n\nAdmin akan mengirim petunjuk pembayaran yang benar.');
+    await notifyAdmin('⚠️ QRIS gagal dikirim ke pelanggan.\nPesanan: '+current.id+'\nTotal: '+formatRupiah(total)+'\nChat: '+msg.from+'\nPeriksa PAYMENT_QR_PATH dan kirim QRIS secara manual.');
+   }
   }else{
-   await reply(msg,'QR pembayaran belum dikonfigurasi. Admin akan mengirimkan metode pembayaran secara manual.');
-   await notifyAdmin('📌 Pesanan '+current.id+' menunggu QR pembayaran.\n'+current.productName+' / '+days+' hari / '+formatRupiah(total)+'\nChat pelanggan: '+msg.from);
+   await reply(msg,'Pesanan *'+current.id+'* sudah dihitung.\nDurasi: *'+days+' hari*\nTotal: *'+formatRupiah(total)+'*\n\nQRIS sedang tidak tersedia. *Jangan transfer dulu.* Admin akan mengirim QRIS resmi ke chat ini.');
+   await notifyAdmin('📌 QRIS belum terpasang di Wispbyte (PAYMENT_QR_PATH).\nPesanan: '+current.id+'\nProduk: '+product.name+'\nDurasi: '+days+' hari\nTotal: '+formatRupiah(total)+'\nChat pelanggan: '+msg.from);
   }
   return;
  }

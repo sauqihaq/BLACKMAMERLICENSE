@@ -37,3 +37,11 @@ Jika instalasi masih mencoba mengunduh Chrome, berarti package.json di Wispbyte 
 ## PC lokal (opsional untuk pengujian)
 
 Dari folder whatsapp-bot jalankan npm install kemudian npm start di Node.js 22/24. Jika PowerShell menolak npm, gunakan npm.cmd. Tidak perlu memasang Chrome.
+
+## QRIS otomatis setelah pelanggan memilih durasi
+
+Upload gambar QRIS resmi milik toko sebagai **qris-blackmamer.jpg** ke direktori utama Wispbyte (sejajar index.js). Atur di **.env**: \`PAYMENT_QR_PATH=./qris-blackmamer.jpg\`, lalu restart server. Pastikan file gambar tidak dipublikasikan lewat GitHub.
+
+Jika pelanggan mengetik \`DURASI 30\`, bot mengambil harga per hari dari API katalog website dan mengalikan dengan 30, kemudian mengirim satu gambar QRIS dengan caption berisi produk, ID pesanan, durasi, harga per hari, total, dan permintaan screenshot bukti. QRIS ini **statis**: pelanggan harus memasukkan nominal pembayaran yang benar di aplikasi pembayaran.
+
+Jika gambar gagal dikirim atau file tidak tersedia, bot memberitahu pelanggan untuk **tidak melakukan transfer dulu** dan meminta admin mengirim QRIS secara manual. Setelah screenshot bukti diterima, admin tetap wajib mengecek mutasi rekening sebelum approve. Periksa apakah nama penerima di aplikasi pembayaran menunjukkan BLACKMAMER STUDIO.

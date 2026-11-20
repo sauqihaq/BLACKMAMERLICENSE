@@ -22,6 +22,31 @@ export function priceFor(product,days){
  const total=value*days;
  return Number.isSafeInteger(total)?total:null;
 }
+/** QRIS message is always calculated from the trusted live website catalog, never customer text. */
+export function paymentCaption({id,productName,pricePerDay,days,total}){
+ const expected=priceFor({price:pricePerDay},days);
+ if(expected===null||expected!==total)throw Error('Invalid QRIS payment amount');
+ const safeName=clean(productName,120);
+ const safeId=String(id||'').toUpperCase();
+ if(!/^[A-F0-9]{8}$/.test(safeId)||!safeName)throw Error('Invalid order');
+ return [
+  '💳 *PEMBAYARAN QRIS BLACKMAMERSTUDIO*',
+  '',
+  'Silakan melakukan pembayaran melalui QRIS pada gambar ini.',
+  '',
+  '📦 Produk: *'+safeName+'*',
+  '🧾 ID Pesanan: *'+safeId+'*',
+  '📅 Durasi: *'+days+' hari*',
+  '💵 Harga per hari: *'+formatRupiah(pricePerDay)+'*',
+  '💰 *TOTAL PEMBAYARAN: '+formatRupiah(total)+'*',
+  '',
+  '✅ Setelah melakukan pembayaran, silakan *kirim screenshot bukti pembayaran ke chat ini*.',
+  '',
+  '🔍 Admin akan memeriksa dana yang masuk. License diproses setelah pembayaran dinyatakan valid.',
+  '',
+  '⚠️ Pastikan penerima QRIS adalah *BLACKMAMER STUDIO* dan masukkan nominal sesuai total di atas.'
+ ].join('\n');
+}
 export function matchProductFromWebsite(message,catalog){
  const body=clean(message,1300).toLocaleLowerCase('id-ID');
  if(!body.includes('blackmamerstudio')||!body.includes('mau pesan'))return null;

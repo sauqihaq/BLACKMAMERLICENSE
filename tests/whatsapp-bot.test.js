@@ -1,7 +1,7 @@
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
-import {parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand} from '../whatsapp-bot/core.js';
+import {parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand,paymentCaption} from '../whatsapp-bot/core.js';
 const site='https://blackmamerlicense.vercel.app';
 const catalog=[{name:'Tripo3D Studio',slug:'tripo',price:12000},{name:'BLACKMAMERSTUDIO | Model Tools SILVER',slug:'sketchfab-model',price:18000}];
 test('website checkout is read from trusted dynamic catalog, never from customer price text',()=>{
@@ -78,4 +78,27 @@ test('website order with stable product slug survives product display-name chang
  assert.equal(matchProductFromWebsite(message,catalog)?.customer,'Pelanggan');
  assert.equal(matchProductFromWebsite(message.replace('Kode Produk: tripo','Kode Produk: invalid-tool'),catalog),null);
  assert.equal(priceFor(catalogAfterRename[0],14),168000);
+});
+
+
+test('QRIS caption computes live-catalog price times duration with screenshot instructions',()=>{
+ const data={id:'A1B2C3D4',productName:'Tripo3D Studio',pricePerDay:12000,days:30,total:360000};
+ const message=paymentCaption(data);
+ assert.match(message,/Tripo3D Studio/);
+ assert.match(message,/A1B2C3D4/);
+ assert.match(message,/30 hari/);
+ assert.match(message,/Rp\s?12\.000/);
+ assert.match(message,/Rp\s?360\.000/);
+ assert.match(message,/screenshot bukti pembayaran ke chat ini/);
+ assert.match(message,/BLACKMAMER STUDIO/);
+ assert.throws(()=>paymentCaption({...data,total:1000}),/Invalid QRIS payment amount/);
+ assert.throws(()=>paymentCaption({...data,days:0,total:0}),/Invalid QRIS payment amount/);
+});
+test('Baileys sends original QRIS image plus complete caption and keeps manual verification',()=>{
+ const index=readFileSync(new URL('../whatsapp-bot/index.js',import.meta.url),'utf8');
+ assert.match(index,/client\.sendMessage\(msg\.from,\{image:fs\.readFileSync\(qrPath\),caption\}\)/);
+ assert.match(index,/PAYMENT_QR_PATH/);
+ assert.match(index,/Jangan transfer dulu/);
+ assert.match(index,/pending_review/);
+ assert.match(index,/awaiting_proof/);
 });
