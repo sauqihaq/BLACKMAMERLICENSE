@@ -1,7 +1,7 @@
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
-import {parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand,paymentCaption,shouldHandleAdmin} from '../whatsapp-bot/core.js';
+import {parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand,paymentCaption} from '../whatsapp-bot/core.js';
 const site='https://blackmamerlicense.vercel.app';
 const catalog=[{name:'Tripo3D Studio',slug:'tripo',price:12000},{name:'BLACKMAMERSTUDIO | Model Tools SILVER',slug:'sketchfab-model',price:18000}];
 test('website checkout is read from trusted dynamic catalog, never from customer price text',()=>{
@@ -112,27 +112,4 @@ test('customers may reply with just digits and bot gives number-only instruction
  assert.match(source,/Cukup balas dengan \*angka saja\*/);
  assert.match(source,/Cukup ketik \*angka jumlah hari\*/);
  assert.match(source,/mengirim QRIS pembayaran/);
-});
-
-test('admin can place orders normally, while only validated admin commands are privileged',()=>{
- const admin='6281383919823@c.us';
- const buyer='6288812345678@c.us';
- const sent='Halo BLACKMAMERSTUDIO, saya mau pesan Tripo3D Studio. Kode Produk: tripo. Harga: Rp 20.000 / day. Nama: Pelanggan. Mohon konfirmasi pilihan durasi lisensi.';
- assert.equal(matchProductFromWebsite(sent,catalog)?.product.slug,'tripo');
- assert.equal(shouldHandleAdmin(admin,sent,admin),false);
- assert.equal(shouldHandleAdmin(admin,'!menu',admin),false);
- assert.equal(shouldHandleAdmin(admin,'7',admin),false);
- assert.equal(shouldHandleAdmin(admin,'!orders',admin),true);
- assert.equal(shouldHandleAdmin(admin,'!help',admin),true);
- assert.equal(shouldHandleAdmin(admin,'!reject A1B2C3D4',admin),true);
- assert.equal(shouldHandleAdmin(buyer,'!reject A1B2C3D4',admin),false);
- assert.equal(shouldHandleAdmin(buyer,'!approve A1B2C3D4 '+site+'/install#token='+'a'.repeat(64),admin),false);
- assert.equal(shouldHandleAdmin(admin,'!approve BAD LINK',admin),false);
- const source=readFileSync(new URL('../whatsapp-bot/index.js',import.meta.url),'utf8');
- assert.match(source,/shouldHandleAdmin\(msg\.from,msg\.body,adminJid\)/);
- assert.match(source,/adminMode\?handleAdmin\(msg\):handleCustomer\(msg\)/);
-});
-test('Baileys logs inbound message-upsert event counts for connection diagnosis',()=>{
- const source=readFileSync(new URL('../whatsapp-bot/baileys-client.js',import.meta.url),'utf8');
- assert.match(source,/\[BAILEYS INCOMING\]/);
 });

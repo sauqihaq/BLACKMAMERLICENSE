@@ -79,11 +79,3 @@ export function parseAdminCommand(raw){
  const x=/^([A-F0-9]{8})\s+(https:\/\/\S+)$/i.exec(args);
  return x?{op,id:x[1].toUpperCase(),url:x[2]}:null;
 }
-
-/**
- * Only commands from the verified admin number use admin mode.
- * Admin's regular website orders and !menu must still enter the customer flow.
- */
-export function shouldHandleAdmin(from,body,adminJid){
- return String(from)===String(adminJid)&&parseAdminCommand(body)!==null;
-}
