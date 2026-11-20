@@ -1,5 +1,14 @@
 (function(){
 'use strict';
+const music = document.getElementById('background-music');
+// Native autoplay takes precedence. A tap or keyboard-activated link can start it if blocked.
+if (music && music.paused) {
+  const startMusic = () => {
+    if (music.paused) music.play().catch(() => {});
+  };
+  document.addEventListener('click', startMusic, true);
+  music.addEventListener('play', () => document.removeEventListener('click', startMusic, true), { once: true });
+}
 const defaultCatalog=[
 {slug:'tripo',name:'Tripo3D Studio',eyebrow:'MODEL · CONVERTER',description:'Manajemen file 3D dan konversi lokal untuk aset yang dimiliki atau diizinkan.',features:['GLB / GLTF','Konversi lokal','Browser extension'],image:'/assets/tripo.svg'},
 {slug:'meshy',name:'Meshy 3D Tools',eyebrow:'WORKFLOW · 3D',description:'Workflow file dan model yang kamu miliki; tidak membuka paywall.',features:['Model milik sendiri','GLB tools','Device ID'],image:'/assets/meshy.svg'},
