@@ -69,7 +69,7 @@ async function beginOrder(msg,p){
  const existing=store.forChat(msg.from);
  if(existing)return reply(msg,'Pesanan '+existing.id+' masih berjalan ('+existing.status+'). Selesaikan dulu pesanan tersebut.');
  const order=store.create({jid:msg.from,productSlug:p.product.slug,productName:p.product.name,customer:p.customer||'Pelanggan',days:null,total:null});
- return reply(msg,'Halo, selamat datang di *BLACKMAMERSTUDIO*! 👋\n\nProduk pilihan: *'+order.productName+'*\nID Pesanan: *'+order.id+'*\n\nMau order untuk *berapa hari*?\n\nBalas dengan *DURASI 7* (7 hari), *DURASI 30* (30 hari), atau jumlah lain seperti *DURASI 14*.\n\nSetelah memilih durasi, bot menghitung total harga dari website resmi.');
+ return reply(msg,'Halo, selamat datang di *BLACKMAMERSTUDIO*! 👋\n\nProduk pilihan: *'+order.productName+'*\nID Pesanan: *'+order.id+'*\n\nMau beli lisensi untuk *berapa hari*?\n\nCukup balas dengan *angka saja*, misalnya *7*, *14*, atau *30*.\n\nSetelah itu, bot akan menghitung total harga dan mengirim QRIS pembayaran di chat ini.');
 }
 async function handleCustomer(msg){
  const body=clean(msg.body,1400);
@@ -92,7 +92,7 @@ async function handleCustomer(msg){
  if(!current)return; // Never auto-reply to unrelated personal WhatsApp messages.
  if(current.status==='choose_duration'){
   const days=parseDuration(body);
-  if(!days)return reply(msg,'Masukkan durasi dengan format *DURASI 7*, *DURASI 14*, atau *DURASI 30* (1–3650 hari).');
+  if(!days)return reply(msg,'Cukup ketik *angka jumlah hari* ya, misalnya *7*, *14*, atau *30* (minimal 1 hari, maksimal 3650 hari).');
   const items=await catalog(),product=productBySlug(items,current.productSlug);
   const total=priceFor(product,days);
   if(total===null)return reply(msg,'Harga produk belum diatur di website. Hubungi admin sebelum melakukan pembayaran.');

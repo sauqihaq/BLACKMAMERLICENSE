@@ -102,3 +102,14 @@ test('Baileys sends original QRIS image plus complete caption and keeps manual v
  assert.match(index,/pending_review/);
  assert.match(index,/awaiting_proof/);
 });
+
+test('customers may reply with just digits and bot gives number-only instruction',()=>{
+ assert.equal(parseDuration('7'),7);
+ assert.equal(parseDuration('14'),14);
+ assert.equal(parseDuration('30'),30);
+ assert.equal(parseDuration('DURASI 7'),7); // old conversations still work
+ const source=readFileSync(new URL('../whatsapp-bot/index.js',import.meta.url),'utf8');
+ assert.match(source,/Cukup balas dengan \*angka saja\*/);
+ assert.match(source,/Cukup ketik \*angka jumlah hari\*/);
+ assert.match(source,/mengirim QRIS pembayaran/);
+});
