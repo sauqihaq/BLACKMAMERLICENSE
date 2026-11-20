@@ -102,8 +102,12 @@ export class Client extends EventEmitter {
    }
   });
   sock.ev.on('messages.upsert',async event=>{
-   if(this.stopping||generation!==this.serial||!this.ready||event.type!=='notify')return;
-   for(const raw of event.messages||[]){
+   if(this.stopping||generation!==this.serial||!this.ready)return;
+   const incoming=(event.messages||[]).filter(m=>m?.message&&!m.key?.fromMe);
+   if(incoming.length)console.log('[BAILEYS INCOMING] event='+event.type+' count='+incoming.length);
+   // 'append' is normally chat-history sync, not a new incoming order.
+   if(event.type!=='notify')return;
+   for(const raw of incoming){
     try{
      if(!raw.message||raw.key?.fromMe)continue;
      let mapped=null;

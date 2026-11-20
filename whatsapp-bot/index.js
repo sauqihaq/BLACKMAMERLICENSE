@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import qrcode from 'qrcode-terminal';
 import {Client} from './baileys-client.js';
 import {createStore} from './store.js';
-import {clean,formatRupiah,parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand,paymentCaption} from './core.js';
+import {clean,formatRupiah,parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand,paymentCaption,shouldHandleAdmin} from './core.js';
 
 const site=String(process.env.WEBSITE_URL||'https://blackmamerlicense.vercel.app').replace(/\/$/,'');
 const adminNumber=String(process.env.ADMIN_WA_NUMBER||'').replace(/\D/g,'');
@@ -147,8 +147,10 @@ healthTimer.unref?.();
 client.on('message',msg=>{
  const id=msg?.id?._serialized;
  if(!ready||msg.fromMe||!(/@c\.us$|@lid$/.test(msg.from||''))||seen(id))return;
- const admin=msg.from===adminJid;
- Promise.resolve().then(()=>admin?handleAdmin(msg):handleCustomer(msg)).catch(e=>{
+ // Admin can also test buying a product. Only known admin commands use admin mode.
+ const adminMode=shouldHandleAdmin(msg.from,msg.body,adminJid);
+ console.log('[WA INCOMING] '+(adminMode?'ADMIN_COMMAND':'CUSTOMER_MESSAGE')+'; checking order flow.');
+ Promise.resolve().then(()=>adminMode?handleAdmin(msg):handleCustomer(msg)).catch(e=>{
   console.error('[MESSAGE ERROR]',e.message);
   reply(msg,'Layanan BLACKMAMERSTUDIO sedang mengalami kendala. Coba lagi atau hubungi admin.').catch(()=>{});
  });
