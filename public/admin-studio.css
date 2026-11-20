@@ -35,3 +35,12 @@ body{background:#111113}.ambient-glow{display:none}.sidebar{background:#171719;b
 .store-preview .product-card-edit{display:flex;gap:9px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:10px}
 .store-preview .product-card-edit button{flex:1;min-width:85px}
 .store-preview .product-card-slug{font-size:9px;letter-spacing:.04em;color:#9d8392;overflow-wrap:anywhere}
+
+/* Use the studio wordmark at its native proportions. */
+.auth-screen { background: radial-gradient(ellipse at 66% 24%, #340e1d, transparent 55%), #0b0a0d }
+.auth-card { background: #151418; border-color: #4b303d }
+.auth-mark, .brand-icon { width: auto; height: auto; background: transparent; border: 0; box-shadow: none }
+.auth-mark img { width: 135px; height: 54px; object-fit: contain }
+.brand-icon img { width: 54px; height: 26px; object-fit: contain }
+.btn-primary { background: linear-gradient(115deg, #cf1439, #a80e2c); border-color: #e34060 }
+.nav-item.active { background: #301721; border-color: #6d3041 }

@@ -15,9 +15,9 @@ const pricesFor=t=>{
 };
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function render(){
-$('cards').innerHTML=catalog.map((t,i)=>'<article class="card"><div class="card-visual"><span class="card-index">0'+(i+1)+' / ACCESS</span>'+
+$('cards').innerHTML=catalog.map(t=>'<article class="card"><div class="card-visual">'+
 (activePromo(t)?'<span class="discount-badge">PROMO -'+Number(t.discountPercent)+'%</span>':'')+
-'<img src="'+escapeHTML(t.image)+'" alt="Ilustrasi '+escapeHTML(t.name)+'" loading="lazy"></div><div class="card-body"><div class="card-eyebrow">'+escapeHTML(t.eyebrow)+'</div><h3>'+escapeHTML(t.name)+'</h3><p>'+escapeHTML(t.description)+'</p><div class="features">'+t.features.map(f=>'<span>'+escapeHTML(f)+'</span>').join('')+'</div><div class="price-row"><div class="price-display"><small>HARGA / DAY</small>'+pricesFor(t)+'</div><div class="card-order-actions"><button type="button" class="card-details" data-buy="'+escapeHTML(t.slug)+'">DETAIL</button><a class="card-order" href="'+escapeHTML(orderUrl(t))+'" target="_blank" rel="noopener noreferrer" aria-label="Order '+escapeHTML(t.name)+' via WhatsApp Business">ORDER ↗</a></div></div></div></article>').join('');
+'<img src="'+escapeHTML(t.image)+'" alt="Ilustrasi '+escapeHTML(t.name)+'" loading="lazy"></div><div class="card-body"><div class="card-eyebrow">'+escapeHTML(t.eyebrow)+'</div><h3>'+escapeHTML(t.name)+'</h3><p>'+escapeHTML(t.description)+'</p><div class="features">'+t.features.map(f=>'<span>'+escapeHTML(f)+'</span>').join('')+'</div><div class="price-row"><div class="price-display">'+pricesFor(t)+'</div><div class="card-order-actions"><button type="button" class="card-details" data-buy="'+escapeHTML(t.slug)+'">Detail</button><a class="card-order" href="'+escapeHTML(orderUrl(t))+'" target="_blank" rel="noopener noreferrer" aria-label="Pesan '+escapeHTML(t.name)+' via WhatsApp Business">Pesan</a></div></div></div></article>').join('');
 document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>openBuy(b.dataset.buy));
 }
 function whatsappPhone(){
@@ -50,8 +50,8 @@ $('buy-promo-expiry').textContent=discounted&&selected.discountUntil?'Promo samp
 
 updateWhatsAppLink();$('buy-discord').disabled=!contacts.discordUrl;
 $('buy-help').textContent=(!contacts.whatsappNumber&&!contacts.discordUrl)?'Kontak admin belum dikonfigurasi. Silakan hubungi pemilik website.':(contacts.note||'Admin akan memberikan instruksi pembayaran. License dibuat setelah pembayaran diverifikasi.');
-$('buy-modal').classList.remove('hidden');$('buyer-name').focus();}
-function closeBuy(){$('buy-modal').classList.add('hidden');}
+$('buy-modal').showModal();$('buyer-name').focus();}
+function closeBuy(){$('buy-modal').close();}
 function getMessage(product=selected){
  if(!product)return '';
  const name=selected?.slug===product.slug?$('buyer-name').value.trim():'';
@@ -59,7 +59,7 @@ function getMessage(product=selected){
  (activePromo(product)?'Harga normal: '+money(product.originalPrice)+'. Diskon '+product.discountPercent+'%. Harga promo: '+money(product.price)+'. ':'Harga: '+money(product.price)+'. ')+
  'Nama: '+(name||'Pelanggan')+'. Mohon konfirmasi pilihan durasi lisensi.';
 }
-$('close-buy').onclick=closeBuy;$('buy-modal').onclick=e=>{if(e.target===$('buy-modal'))closeBuy();};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeBuy();});
+$('close-buy').onclick=closeBuy;$('buy-modal').onclick=e=>{if(e.target===$('buy-modal'))closeBuy();};
 $('buyer-name').addEventListener('input',updateWhatsAppLink);
 $('buy-wa').addEventListener('click',event=>{
  updateWhatsAppLink();
