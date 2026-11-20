@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {AI_MODEL,SYSTEM_PROMPT,parseChatPayload,faqAnswer,containsSensitiveInput} from '../lib/ai-chat-logic.js';
-import handler from '../api/ai-chat.js';
+import handler from '../lib/routes/ai-chat.js';
 
 function mockRes(){
  const headers={},result={statusCode:200,headers,body:null};
@@ -63,5 +63,5 @@ test('API enforces POST, same origin and no secrets',async()=>{
 });
 test('vercel serves AI endpoint via rewrite',()=>{
  const config=JSON.parse(readFileSync('vercel.json','utf8'));
- assert.ok(config.rewrites.some(r=>r.source==='/api/ai-chat'&&r.destination==='/api/ai-chat.js'));
+ assert.ok(config.rewrites.some(r=>r.source==='/api/ai-chat'&&r.destination==='/api/health?view=chat'));
 });

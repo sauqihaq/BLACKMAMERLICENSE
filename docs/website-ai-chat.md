@@ -10,7 +10,7 @@ Default widget tetap bekerja sebagai **asisten panduan/FAQ** saat belum ada API 
 2. Buka Vercel Dashboard → BLACKMAMERLICENSE → Settings → Environment Variables.
 3. Tambahkan nama **GEMINI_API_KEY**, isi API key secara privat. Pilih Production (dan Preview jika dibutuhkan).
 4. Klik Redeploy di Vercel. Jangan pernah memasukkan key ke frontend, GitHub, file publik, atau membagikannya di chat.
-5. Widget akan memakai Gemini 2.5 Flash-Lite via endpoint server-side /api/ai-chat dengan batas input/output. Jika key belum disetel, kuota habis, atau provider gagal, asisten FAQ otomatis tetap menjawab, dengan label mode yang jelas.
+5. Widget akan memakai Gemini 2.5 Flash-Lite via endpoint server-side /api/ai-chat (rewrite ke health function existing) dengan batas input/output. Jika key belum disetel, kuota habis, atau provider gagal, asisten FAQ otomatis tetap menjawab, dengan label mode yang jelas.
 
 Model dan batas gratis dapat berubah; lihat dokumentasi harga resmi https://ai.google.dev/gemini-api/docs/pricing dan kuota dashboard proyek kamu. Tidak ada jaminan layanan tanpa biaya tanpa memeriksa tier/billing project. Penggunaan komersial website juga harus mengikuti syarat hosting Vercel yang dipakai.
 

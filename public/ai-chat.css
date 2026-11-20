@@ -27,7 +27,7 @@
 .bm-ai-quick button:hover{border-color:#e45772;background:#35212d}
 .bm-ai-foot{padding:11px 13px 12px;border-top:1px solid #3c323b;background:#19161b}
 .bm-ai-form{display:flex;align-items:flex-end;gap:9px}
-.bm-ai-input{flex:1;min-width:0;max-height:104px;min-height:42px;padding:11px 12px;resize:none;background:#28232a;border:1px solid #50414d;border-radius:10px;color:#fff;font:12.5px/1.5 inherit;outline:0}
+.bm-ai-input{flex:1;min-width:0;max-height:104px;min-height:42px;padding:11px 12px;resize:none;background:#28232a;border:1px solid #50414d;border-radius:10px;color:#fff;font:inherit;font-size:12.5px;line-height:1.5;outline:0}
 .bm-ai-input::placeholder{color:#928692}
 .bm-ai-input:focus{border-color:#ee5a75;box-shadow:0 0 0 2px #cc36501f}
 .bm-ai-send{height:42px;width:42px;display:grid;place-items:center;flex-shrink:0;border:1px solid #ee6780;border-radius:10px;background:#be2344;color:#fff;cursor:pointer}
