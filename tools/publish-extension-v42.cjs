@@ -129,6 +129,86 @@ const uiLock=String.raw`/* BLACKMAMERSTUDIO official signed UI — engine enforc
 })();
 `;
 const notice=`BLACKMAMERSTUDIO — OFFICIAL BUILD / BRANDING NOTICE\n\nOwner-controlled additions include BLACKMAMER branding, UI assets, licensed-delivery integration, and integrity controls.\nUnauthorized repackaging or impersonation as an official BLACKMAMERSTUDIO build is prohibited by the rights holder.\nUnderlying third-party software remains subject to its own licenses. Preserve the original license and attribution files.\nLocal client-side integrity checks can be bypassed by someone controlling the installed source files; server-side license authorization remains essential.\n`;
+
+/** Brand-facing terminology only. Internal Chrome APIs, locale keys and standard
+ * // ==UserScript== metadata must stay unchanged for compatibility. */
+function bmWord(s){
+  return String(s).split(/(==\/?UserScript==)/gi).map(part=>{
+    if(/^==\/?UserScript==$/i.test(part))return part;
+    return part.replace(/\buserscripts?\b/gi,word=>/s$/i.test(word)?'BMscripts':'BMscript');
+  }).join('');
+}
+function renameUiTerminology(){
+  let changed=0;
+  // HTML text nodes / human-facing accessible labels; leave URLs and DOM IDs intact.
+  for(const name of fs.readdirSync(root).filter(n=>n.endsWith('.html'))){
+    let html=read(name),before=html;
+    html=html.replace(/>([^<>]+)</g,(whole,visible)=>'>'+bmWord(visible)+'<');
+    html=html.replace(/\b(title|placeholder|aria-label|alt)\s*=\s*(["'])(.*?)\2/gi,
+      (whole,attribute,quote,value)=>attribute+'='+quote+bmWord(value)+quote);
+    if(html!==before){write(name,html);changed++;}
+  }
+  // Locale dictionary keys are IDs referenced by the engine and MUST remain intact.
+  const langRoot=path.join(root,'_locales');
+  if(fs.existsSync(langRoot)){
+    for(const lang of fs.readdirSync(langRoot)){
+      const name=path.join('_locales',lang,'messages.json');
+      if(!fs.existsSync(path.join(root,name)))continue;
+      const messages=JSON.parse(read(name));
+      let touched=false;
+      for(const info of Object.values(messages)){
+        if(!info||typeof info!=='object')continue;
+        for(const key of ['message','description']){
+          if(typeof info[key]!=='string')continue;
+          const translated=bmWord(info[key]);
+          if(translated!==info[key]){info[key]=translated;touched=true;}
+        }
+      }
+      if(touched){write(name,JSON.stringify(messages,null,0)+'\n');changed++;}
+    }
+  }
+  // Replace JavaScript string *values* representing visible text, not identifiers,
+  // namespace keys, browser APIs, network URLs, MIME types, or filenames.
+  for(const name of namesToObfuscate){
+    const filename=path.join(root,name);
+    if(!fs.existsSync(filename))continue;
+    let source=read(name);
+    const ast=ts.createSourceFile(name,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+    if(ast.parseDiagnostics.length)throw Error('BMscript UI AST parse failed: '+name);
+    const edits=[];
+    function walk(node){
+      if((ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node))&&/userscript/i.test(node.text)){
+        const value=node.text;
+        const technical=/^(?:userscripts?|userscripts?[-./]|[A-Za-z0-9_.:/-]*UserScript[A-Za-z0-9_.:/-]*)$/i.test(value)
+          ||/^https?:\/\//i.test(value)||/userscripts?\.org|userscript\.grobilan/i.test(value)
+          ||/^text\/x-userscript/i.test(value)||/^chrome\.runtime\.onUserScript/i.test(value)
+          ||/^\w+_UserScript_|^userscripts\//i.test(value)
+          ||/\.html$/i.test(value);
+        if(!technical){
+          const next=bmWord(value);
+          if(next!==value)edits.push({start:node.getStart(ast),end:node.getEnd(),value:JSON.stringify(next)});
+        }
+      }
+      ts.forEachChild(node,walk);
+    }
+    walk(ast);
+    if(edits.length){
+      for(const e of edits.sort((a,b)=>b.start-a.start))source=source.slice(0,e.start)+e.value+source.slice(e.end);
+      write(name,source);
+      changed++;
+      cp.execFileSync('node',['--check',filename],{stdio:'pipe'});
+    }
+  }
+  const manifest=JSON.parse(read('manifest.json'));
+  if(manifest.description)manifest.description=bmWord(manifest.description);
+  if(manifest.action?.default_title)manifest.action.default_title=bmWord(manifest.action.default_title);
+  write('manifest.json',JSON.stringify(manifest,null,2)+'\n');
+  // Keep the required metadata markers and Chrome's userScripts API available.
+  if(!read('studio.js').includes('==UserScript=='))throw Error('BMscript branding damaged metadata marker');
+  if(!JSON.parse(read('manifest.json')).permissions.includes('userScripts'))throw Error('BMscript branding damaged Chrome permissions');
+  console.log('BMscript labels updated in '+changed+' UI, locale and JS files.');
+}
+
 function build(){
   if(!fs.existsSync(zipPath))throw Error('Original ZIP absent: '+zipPath);
   cp.execFileSync('unzip',['-qq',zipPath,'-d',TMP]);
@@ -149,9 +229,9 @@ function build(){
     "  case 'brand-check':return {verified:true,brand:'BLACKMAMERSTUDIO'};\n  case 'state':{let scriptsAllowed=false;",'background.js');
   write('background.js',bg);
   const manifest=JSON.parse(read('manifest.json'));
-  Object.assign(manifest,{version:'5.6.3',version_name:'4.2.0',name:'BlackMamer',short_name:'BlackMamer',
-    description:'BLACKMAMERSTUDIO official V4.2 obfuscated and digitally signed licensed build.'});
-  manifest.action.default_title='BLACKMAMERSTUDIO — Official Licensed Build';
+  Object.assign(manifest,{version:'5.6.4',version_name:'4.3.0',name:'BlackMamer',short_name:'BlackMamer',
+    description:'BLACKMAMERSTUDIO official V4.3 obfuscated and digitally signed licensed build.'});
+  manifest.action.default_title='BLACKMAMERSTUDIO — BMscript Manager · Official Build';
   write('manifest.json',JSON.stringify(manifest,null,2)+'\n');
   for(const [name,needle,script] of [
     ['popup.html','<div class="eyebrow">YOUR BROWSER, ORGANIZED.</div>','<script src="popup.js" defer></script>'],
@@ -168,7 +248,8 @@ function build(){
   const key=publicKey.export({type:'spki',format:'der'}).toString('base64');
   write('bm-brand-guard.js',guard.replace('__PUBLIC_SPki_B64__',key));
   write('bm-ui-lock.js',uiLock);write('LICENSE-BLACKMAMERSTUDIO.txt',notice);
-  write('README.md',read('README.md')+'\n\n## Official BLACKMAMERSTUDIO v4.2\nThis official extension uses a signed asset manifest and static MV3-compatible JavaScript obfuscation. It checks branding, engine/UI source and 32 assets at startup and regularly; invalid assets disable the extension. Existing website-bound product licenses are preserved; no second key entry is needed. Signing private key is not included in the distribution. Integrity checks can be bypassed by an adversary controlling local files, so license enforcement must remain server-side.\n');
+  write('README.md',read('README.md')+'\n\n## Official BLACKMAMERSTUDIO v4.3\nThis official extension uses a signed asset manifest and static MV3-compatible JavaScript obfuscation. It checks branding, engine/UI source and 32 assets at startup and regularly; invalid assets disable the extension. Existing website-bound product licenses are preserved; no second key entry is needed. Signing private key is not included in the distribution. Integrity checks can be bypassed by an adversary controlling local files, so license enforcement must remain server-side.\n');
+  renameUiTerminology();
   let total=0;
   for(const name of namesToObfuscate){if(!fs.existsSync(path.join(root,name)))continue;
     const result=obfuscate(read(name),name);write(name,result.code);total+=result.count;
@@ -176,7 +257,7 @@ function build(){
   }
   const sha=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
   const files={};for(const f of protectedFiles){if(!fs.existsSync(path.join(root,f)))throw Error('Missing signed asset '+f);files[f]=sha(f);}
-  const payload={brand:'BLACKMAMERSTUDIO',product:'BlackMamer',version:'5.6.3',versionName:'4.2.0',policy:'official-asset-integrity-v1',files};
+  const payload={brand:'BLACKMAMERSTUDIO',product:'BlackMamer',version:'5.6.4',versionName:'4.3.0',policy:'official-asset-integrity-v1',files};
   const stable=v=>Array.isArray(v)?'['+v.map(stable).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}':JSON.stringify(v);
   const signature=crypto.sign('sha256',Buffer.from(stable(payload)),{key:privateKey,dsaEncoding:'ieee-p1363'}).toString('base64');
   if(!crypto.verify('sha256',Buffer.from(stable(payload)),{key:publicKey,dsaEncoding:'ieee-p1363'},Buffer.from(signature,'base64')))throw Error('Signature self-test failed');
@@ -184,6 +265,6 @@ function build(){
   cp.execFileSync('zip',['-qr','-9',zipPath,rootName],{cwd:TMP});
   const zip=cp.execFileSync('unzip',['-Z','-1',zipPath],{encoding:'utf8'});
   if(!zip.includes(rootName+'/bm-brand-seal.json'))throw Error('Built ZIP missing signature');
-  console.log(`BLACKMAMERSTUDIO V4.2 verified and staged: obfuscated ${total} string literals, ${Object.keys(files).length} signed resources, ZIP ${fs.statSync(zipPath).size} bytes.`);
+  console.log(`BLACKMAMERSTUDIO V4.3 verified and staged: obfuscated ${total} string literals, ${Object.keys(files).length} signed resources, ZIP ${fs.statSync(zipPath).size} bytes.`);
 }
 try{build();}finally{fs.rmSync(TMP,{recursive:true,force:true});}
