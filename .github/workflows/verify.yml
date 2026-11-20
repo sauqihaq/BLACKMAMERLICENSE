@@ -20,3 +20,11 @@ jobs:
           node --check userscript/tool-client-template.user.js
           node --check public/admin-delivery.js
           npm test
+      - name: Validate lightweight Baileys dependency and adapter
+        working-directory: whatsapp-bot
+        run: |
+          node --check index.js
+          node --check baileys-client.js
+          node --check baileys-message.js
+          npm install --no-audit --no-fund
+          node --input-type=module -e "import('./baileys-client.js').then(m => { if (typeof m.Client !== 'function') process.exit(2); console.log('Baileys adapter import OK') })"
