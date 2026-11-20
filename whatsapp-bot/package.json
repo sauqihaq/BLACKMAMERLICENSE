@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node index.js",
-    "test": "node --test ../tests/whatsapp-bot.test.js"
+    "test": "node --test ../tests/whatsapp-bot.test.js",
+    "postinstall": "npx puppeteer browsers install chrome"
   },
   "dependencies": {
     "dotenv": "^16.6.1",

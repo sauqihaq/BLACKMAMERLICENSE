@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand} from '../whatsapp-bot/core.js';
 const site='https://blackmamerlicense.vercel.app';
@@ -29,4 +30,9 @@ test('license link only accepted on verified origin, path and token format',()=>
  assert.equal(validInstallLink(site+'/other?token='+'a'.repeat(64),site),null);
  assert.equal(validInstallLink(site+'/install#token=1234',site),null);
  assert.equal(validInstallLink('javascript:alert(1)',site),null);
+});
+
+test('Puppeteer browser install is part of the Wispbyte npm install flow',()=>{
+ const pkg=JSON.parse(readFileSync(new URL('../whatsapp-bot/package.json',import.meta.url),'utf8'));
+ assert.equal(pkg.scripts.postinstall,'npx puppeteer browsers install chrome');
 });

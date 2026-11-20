@@ -2,6 +2,12 @@
 
 Bot gratis dari library `whatsapp-web.js`. **Tidak berjalan di Vercel Functions.** Jalankan di PC Windows yang tetap menyala atau server Node.js dengan Chromium dan disk persisten. Website Vercel dan Neon tetap berjalan seperti biasa.
 
+## Perbaikan Chromium di Wispbyte (Free)
+
+Jika server gagal karena `Could not find Chrome`, perbarui file `package.json` pada server Wispbyte dengan versi terbaru dari folder ini. Wispbyte menjalankan `npm install` pada startup. Script `postinstall` kini melakukan `npx puppeteer browsers install chrome` agar Chrome yang cocok tersedia dalam cache Puppeteer, lalu server melanjutkan ke `node index.js`. Jangan menjalankan unduhan Chrome dari chat/tautan tidak resmi.
+
+**Batasan:** server Free Wispbyte hanya 512 MB RAM dan 1 GB storage; proses ini bisa gagal karena storage, izin download, atau library Chromium Linux belum tersedia. Jika itu terjadi, pertimbangkan PC lokal atau server dengan resource lebih besar. Jangan scan QR nomor bisnis utama sebelum Chromium lolos pengujian. Browser dan sesi harus disimpan di disk persisten.
+
 ## Setup di PC Windows
 
 1. Pasang Node.js 22+ dan Chrome; buka terminal di folder `whatsapp-bot`.
