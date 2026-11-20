@@ -2,25 +2,19 @@ import 'dotenv/config';
 import path from 'node:path';
 import fs from 'node:fs';
 import qrcode from 'qrcode-terminal';
-import wwebjs from 'whatsapp-web.js';
+import {Client} from './baileys-client.js';
 import {createStore} from './store.js';
 import {clean,formatRupiah,parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand} from './core.js';
 
-const {Client,LocalAuth,MessageMedia}=wwebjs;
 const site=String(process.env.WEBSITE_URL||'https://blackmamerlicense.vercel.app').replace(/\/$/,'');
 const adminNumber=String(process.env.ADMIN_WA_NUMBER||'').replace(/\D/g,'');
 if(!/^[1-9]\d{8,14}$/.test(adminNumber))throw Error('Set ADMIN_WA_NUMBER di .env dengan nomor admin terpisah, format 628xxx.');
 const adminJid=adminNumber+'@c.us';
 const qrPath=process.env.PAYMENT_QR_PATH?path.resolve(process.env.PAYMENT_QR_PATH):'';
 const store=createStore(process.env.BOT_DATA_DIR||'./.bot-data');
-const authDir=path.resolve(process.env.BOT_SESSION_DIR||'./.wwebjs_auth');
-const browserArgs=process.platform==='linux'?['--no-sandbox','--disable-setuid-sandbox']:[];
-const client=new Client({
- authStrategy:new LocalAuth({dataPath:authDir,clientId:'blackmamerstudio'}),
- authTimeoutMs:120000,
- puppeteer:{headless:true,args:browserArgs,protocolTimeout:120000,
-  ...(process.env.CHROME_EXECUTABLE_PATH?{executablePath:process.env.CHROME_EXECUTABLE_PATH}:{})}
-});
+// A distinct Baileys directory keeps old Chromium sessions untouched and untrusted.
+const authDir=path.resolve(process.env.BAILEYS_AUTH_DIR||'./.baileys_auth');
+const client=new Client({authDir});
 let ready=false;
 const recentIds=new Set();
 const seen=id=>{
@@ -58,7 +52,7 @@ async function handleAdmin(msg){
   return reply(msg,'Pesanan '+order.id+' ditolak.');
  }
  const url=validInstallLink(cmd.url,site);
- if(!url)return reply(msg,'Link harus URL install resmi '+site+'/install?token=... dari Admin Panel.');
+ if(!url)return reply(msg,'Link harus URL install resmi '+site+'/install#token=... dari Admin Panel.');
  // No payment is verified by the bot. Only the configured admin can send the approval.
  // License must be issued manually in website Admin > Produk & Akses first.
  store.update(order.id,{status:'approved_sending',installUrl:url});
@@ -105,7 +99,7 @@ async function handleCustomer(msg){
   store.update(current.id,{days,total,status:'awaiting_proof'});
   await reply(msg,'*RINCIAN PESANAN*\nID: '+current.id+'\nProduk: '+current.productName+'\nDurasi: '+days+' hari\nTotal: *'+formatRupiah(total)+'*\n\nLakukan pembayaran ke QR resmi yang dikirim admin, kemudian kirim *foto bukti pembayaran* di chat ini. Bukti akan ditinjau manual, bukan disetujui otomatis.');
   if(qrPath&&fs.existsSync(qrPath)){
-   await client.sendMessage(msg.from,MessageMedia.fromFilePath(qrPath),{caption:'QR pembayaran BLACKMAMERSTUDIO. Pastikan nama penerima sebelum transfer.'});
+   await client.sendMessage(msg.from,{image:fs.readFileSync(qrPath),caption:'QR pembayaran BLACKMAMERSTUDIO. Pastikan nama penerima sebelum transfer.'});
   }else{
    await reply(msg,'QR pembayaran belum dikonfigurasi. Admin akan mengirimkan metode pembayaran secara manual.');
    await notifyAdmin('📌 Pesanan '+current.id+' menunggu QR pembayaran.\n'+current.productName+' / '+days+' hari / '+formatRupiah(total)+'\nChat pelanggan: '+msg.from);
@@ -139,12 +133,12 @@ client.on('disconnected',reason=>{ready=false;console.warn('[WHATSAPP DISCONNECT
 const healthTimer=setInterval(()=>{
  if(ready)return;
  const mem=Math.round(process.memoryUsage().rss/(1024*1024));
- console.log('[WA WAITING] Belum READY; Node.js RSS '+mem+' MB (belum termasuk Chromium). Periksa RAM total di panel Wispbyte.');
+ console.log('[WA WAITING] Baileys belum READY; Node.js RSS '+mem+' MB (tanpa Chromium). Periksa koneksi Wispbyte dan QR terbaru.');
 },60000);
 healthTimer.unref?.();
 client.on('message',msg=>{
  const id=msg?.id?._serialized;
- if(!ready||msg.fromMe||!msg.from?.endsWith('@c.us')||seen(id))return;
+ if(!ready||msg.fromMe||!(/@c\.us$|@lid$/.test(msg.from||''))||seen(id))return;
  const admin=msg.from===adminJid;
  Promise.resolve().then(()=>admin?handleAdmin(msg):handleCustomer(msg)).catch(e=>{
   console.error('[MESSAGE ERROR]',e.message);
@@ -153,5 +147,5 @@ client.on('message',msg=>{
 });
 process.on('SIGINT',()=>client.destroy().finally(()=>process.exit(0)));
 process.on('SIGTERM',()=>client.destroy().finally(()=>process.exit(0)));
-console.log('[BLACKMAMERSTUDIO] Starting WhatsApp bot... LocalAuth:',authDir);
+console.log('[BLACKMAMERSTUDIO] Starting Baileys WhatsApp bot... Auth folder:',authDir);
 await client.initialize();

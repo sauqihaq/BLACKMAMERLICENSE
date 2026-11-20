@@ -32,16 +32,41 @@ test('license link only accepted on verified origin, path and token format',()=>
  assert.equal(validInstallLink('javascript:alert(1)',site),null);
 });
 
-test('Puppeteer browser install is part of the Wispbyte npm install flow',()=>{
+test('Baileys replaces Chromium and Puppeteer in the deployment package',()=>{
  const pkg=JSON.parse(readFileSync(new URL('../whatsapp-bot/package.json',import.meta.url),'utf8'));
- assert.equal(pkg.scripts.postinstall,'npx puppeteer browsers install chrome');
+ assert.ok(pkg.dependencies['@whiskeysockets/baileys']);
+ assert.ok(!pkg.dependencies['whatsapp-web.js']);
+ assert.ok(!pkg.scripts.postinstall);
+ assert.ok(!pkg.dependencies.puppeteer);
 });
 
 
-test('Wispbyte QR troubleshooting reports authentication and connection states',()=>{
- const source=readFileSync(new URL('../whatsapp-bot/index.js',import.meta.url),'utf8');
- for(const event of ['authenticated','loading_screen','change_state','auth_failure','disconnected','ready'])
-   assert.ok(source.includes(`client.on('${event}'`),`missing event ${event}`);
- assert.match(source,/authTimeoutMs:120000/);
- assert.match(source,/protocolTimeout:120000/);
+test('Baileys socket diagnostics, QR and messages are handled in the adapter',()=>{
+ const source=readFileSync(new URL('../whatsapp-bot/baileys-client.js',import.meta.url),'utf8');
+ assert.match(source,/connection\.update/);
+ assert.match(source,/messages\.upsert/);
+ assert.match(source,/creds\.update/);
+ assert.match(source,/useMultiFileAuthState/);
+ assert.match(source,/downloadContentFromMessage/);
+ assert.match(source,/DisconnectReason\.loggedOut/);
+});
+
+import {incomingChatId,outgoingJid,personalJid,messageText,attachment} from '../whatsapp-bot/baileys-message.js';
+test('JID conversion supports PN, LID and refuses group/admin impersonation',()=>{
+ assert.equal(outgoingJid('6281383919823@c.us'),'6281383919823@s.whatsapp.net');
+ assert.equal(outgoingJid('123456789@lid'),'123456789@lid');
+ assert.throws(()=>outgoingJid('customer@g.us'));
+ assert.equal(incomingChatId({remoteJid:'123456789@lid',remoteJidAlt:'6281383919823@s.whatsapp.net'}),'6281383919823@c.us');
+ assert.equal(incomingChatId({remoteJid:'123456789@lid'},'6281383919823@s.whatsapp.net'),'6281383919823@c.us');
+ assert.equal(incomingChatId({remoteJid:'123456789@lid'}),'123456789@lid');
+ assert.equal(incomingChatId({remoteJid:'group@g.us'}),null);
+ assert.equal(personalJid('123456789@lid'),true);
+ assert.equal(personalJid('group@g.us'),false);
+});
+test('text and media extraction unwrap ephemeral messages and captures',()=>{
+ const wrapper={ephemeralMessage:{message:{imageMessage:{mimetype:'image/png',caption:'Bukti transfer'}}}};
+ assert.equal(messageText(wrapper),'Bukti transfer');
+ assert.equal(attachment(wrapper).type,'image');
+ assert.equal(attachment({documentMessage:{mimetype:'application/pdf'}}).type,'document');
+ assert.equal(attachment({conversation:'Hi'}),null);
 });

@@ -1,5 +1,6 @@
 node_modules/
 .env
+.baileys_auth/
 .wwebjs_auth/
 .bot-data/
 *.log

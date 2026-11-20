@@ -1,6 +1,6 @@
 {
   "name": "blackmamerstudio-whatsapp-bot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -8,12 +8,12 @@
   },
   "scripts": {
     "start": "node index.js",
-    "test": "node --test ../tests/whatsapp-bot.test.js",
-    "postinstall": "npx puppeteer browsers install chrome"
+    "test": "node --test ../tests/whatsapp-bot.test.js"
   },
   "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14",
     "dotenv": "^16.6.1",
-    "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.34.8"
+    "pino": "^9.6.0",
+    "qrcode-terminal": "^0.12.0"
   }
 }
