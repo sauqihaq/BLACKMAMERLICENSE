@@ -27,7 +27,7 @@ Dari **nomor ADMIN_WA_NUMBER** yang telah diatur, chat ke nomor WhatsApp Busines
 - `!help`: petunjuk.
 - **Periksa mutasi rekening**, jangan mempercayai screenshot sebagai bukti dana masuk.
 - Buka website **Admin → Produk & Akses**, pilih produk/durasi/nama yang sesuai, **Terbitkan akses + link install**.
-- Salin URL hasilnya lalu kirim pesan `!approve ABCD1234 https://blackmamerlicense.vercel.app/install?token=<64-digit-hex>` (ganti ID dan URL resmi).
+- Salin URL hasilnya lalu kirim pesan `!approve ABCD1234 https://blackmamerlicense.vercel.app/install#token=<64-digit-hex>` (ganti ID dan URL resmi).
 - Bot baru kemudian mengirim link tersebut ke pembeli dan menyimpan status selesai.
 - Jika bukti tidak sesuai: `!reject ABCD1234`.
 

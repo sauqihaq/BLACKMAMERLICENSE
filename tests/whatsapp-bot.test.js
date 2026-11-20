@@ -18,15 +18,15 @@ test('durations are bounded and untrusted chats cannot trigger license approval'
  assert.equal(parseDuration('30 hari'),30);
  assert.equal(parseDuration('durasi 9999'),null);
  assert.equal(parseDuration('durasi -4'),null);
- assert.equal(parseAdminCommand('!approve 12345678 https://blackmamerlicense.vercel.app/install?token='+'a'.repeat(64)).op,'approve');
+ assert.equal(parseAdminCommand('!approve 12345678 https://blackmamerlicense.vercel.app/install#token='+'a'.repeat(64)).op,'approve');
  assert.equal(parseAdminCommand('!reject 12345678').op,'reject');
  assert.equal(parseAdminCommand('!approve invalid'),null);
 });
 test('license link only accepted on verified origin, path and token format',()=>{
- const good=site+'/install?token='+'a'.repeat(64);
+ const good=site+'/install#token='+'a'.repeat(64);
  assert.equal(validInstallLink(good,site),good);
- assert.equal(validInstallLink('https://evil.example/install?token='+'a'.repeat(64),site),null);
+ assert.equal(validInstallLink('https://evil.example/install#token='+'a'.repeat(64),site),null);
  assert.equal(validInstallLink(site+'/other?token='+'a'.repeat(64),site),null);
- assert.equal(validInstallLink(site+'/install?token=1234',site),null);
+ assert.equal(validInstallLink(site+'/install#token=1234',site),null);
  assert.equal(validInstallLink('javascript:alert(1)',site),null);
 });

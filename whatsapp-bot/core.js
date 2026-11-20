@@ -37,8 +37,7 @@ export function productBySlug(catalog,slug){
 export function validInstallLink(raw,websiteUrl){
  try{
   const site=new URL(websiteUrl),url=new URL(String(raw));
-  return url.protocol==='https:'&&url.origin===site.origin&&url.pathname==='/install'&&url.searchParams.has('token')&&
-    /^[a-f0-9]{64}$/i.test(url.searchParams.get('token')||'')?url.href:null;
+  return url.protocol==='https:'&&url.origin===site.origin&&url.pathname==='/install'&&(/^#token=[a-f0-9]{64}$/i.test(url.hash))&&url.search===''?url.href:null;
  }catch{return null;}
 }
 export function parseAdminCommand(raw){

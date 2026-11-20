@@ -42,7 +42,7 @@ async function notifyAdmin(text){
 async function handleAdmin(msg){
  const cmd=parseAdminCommand(msg.body);
  if(!cmd)return;
- if(cmd.op==='help')return reply(msg,'*BLACKMAMERSTUDIO Admin*\n!orders — pesanan terakhir\n!approve ID URL — setujui setelah cek transfer dan terbitkan link di website\n!reject ID — tolak pembayaran.\nContoh: !approve A1B2C3D4 https://blackmamerlicense.vercel.app/install?token=...');
+ if(cmd.op==='help')return reply(msg,'*BLACKMAMERSTUDIO Admin*\n!orders — pesanan terakhir\n!approve ID URL — setujui setelah cek transfer dan terbitkan link di website\n!reject ID — tolak pembayaran.\nContoh: !approve A1B2C3D4 https://blackmamerlicense.vercel.app/install#token=...');
  if(cmd.op==='orders'){
   const last=store.all().slice(0,10);
   return reply(msg,last.length?last.map(o=>o.id+' | '+o.status+' | '+o.productName+' | '+o.days+' hari | '+formatRupiah(o.total||0)).join('\n'):'Belum ada pesanan.');
