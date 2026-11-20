@@ -8,6 +8,8 @@
   <title>BLACKMAMER STUDIO — Lisensi 3D Ripper</title>
   <link rel="icon" href="/assets/favicon.ico">
   <link rel="stylesheet" href="/store-studio.css?v=26">
+  <link rel="stylesheet" href="/ai-chat.css?v=1">
+  <script src="/ai-chat.js?v=1" defer></script>
   <script src="/store.js?v=27" defer></script>
 </head>
 <body>
@@ -74,5 +76,40 @@
       <p id="buy-help" class="note"></p><a id="buy-install" class="text-link" href="/extension">Pasang ekstensi BlackMamer</a>
     </div>
   </dialog>
+  <!-- Floating AI Customer Support — separate from WhatsApp checkout -->
+  <aside class="bm-ai" id="bm-ai-widget" aria-label="Bantuan chat BLACKMAMERSTUDIO">
+    <section class="bm-ai-panel" id="bm-ai-panel" role="dialog" aria-modal="false" aria-label="Chat asisten BLACKMAMERSTUDIO" hidden>
+      <header class="bm-ai-head">
+        <div class="bm-ai-avatar" aria-hidden="true">BM</div>
+        <div class="bm-ai-head-txt"><strong>BLACKMAMER Assistant</strong><small id="bm-ai-status">Asisten BLACKMAMERSTUDIO</small></div>
+        <div class="bm-ai-actions">
+          <button type="button" id="bm-ai-clear" title="Bersihkan chat" aria-label="Mulai percakapan baru">↻</button>
+          <button type="button" id="bm-ai-close" title="Tutup chat" aria-label="Tutup chat">×</button>
+        </div>
+      </header>
+      <div class="bm-ai-messages" id="bm-ai-messages" aria-live="polite" aria-relevant="additions text">
+        <div class="bm-ai-intro">CUSTOMER SUPPORT · BLACKMAMERSTUDIO</div>
+        <div class="bm-ai-message bm-ai-bot">Hai! 👋 Ada yang bisa kubantu tentang lisensi, pembayaran, atau instalasi BMscript?</div>
+      </div>
+      <div class="bm-ai-quick" id="bm-ai-quick" aria-label="Pertanyaan cepat">
+        <button type="button" data-question="Bagaimana cara memasang extension dan BMscript?">Cara instal</button>
+        <button type="button" data-question="Bagaimana cara beli lisensi dan melihat harganya?">Beli lisensi</button>
+        <button type="button" data-question="Bagaimana pembayaran QRIS diverifikasi?">Pembayaran</button>
+      </div>
+      <footer class="bm-ai-foot">
+        <form class="bm-ai-form" id="bm-ai-form">
+          <textarea class="bm-ai-input" id="bm-ai-input" rows="1" maxlength="900" placeholder="Tanyakan sesuatu..." aria-label="Pesan ke asisten" required></textarea>
+          <button type="submit" class="bm-ai-send" id="bm-ai-send" aria-label="Kirim pesan">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          </button>
+        </form>
+        <div class="bm-ai-links"><span>Jangan kirim token / data pembayaran.</span><a id="bm-ai-whatsapp" href="https://wa.me/62881080044640" target="_blank" rel="noopener noreferrer">Chat admin ↗</a></div>
+      </footer>
+    </section>
+    <button type="button" id="bm-ai-toggle" class="bm-ai-toggle" aria-controls="bm-ai-panel" aria-expanded="false" aria-label="Buka bantuan chat">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3a8.5 8.5 0 0 1 8.5 8.5Z"/><path d="M8 11.5h9m-9 3h5"/></svg>
+      <span class="bm-ai-dot" aria-hidden="true"></span>
+    </button>
+  </aside>
 </body>
 </html>

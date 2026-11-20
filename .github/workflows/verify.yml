@@ -17,6 +17,9 @@ jobs:
         run: |
           node --check public/admin.js
           node --check public/store.js
+          node --check public/ai-chat.js
+          node --check api/ai-chat.js
+          node --check lib/ai-chat-logic.js
           node --check userscript/tool-client-template.user.js
           node --check public/admin-delivery.js
           npm test
