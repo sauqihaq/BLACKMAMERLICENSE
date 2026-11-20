@@ -45,3 +45,13 @@ Upload gambar QRIS resmi milik toko sebagai **qris-blackmamer.jpg** ke direktori
 Jika pelanggan mengetik \`DURASI 30\`, bot mengambil harga per hari dari API katalog website dan mengalikan dengan 30, kemudian mengirim satu gambar QRIS dengan caption berisi produk, ID pesanan, durasi, harga per hari, total, dan permintaan screenshot bukti. QRIS ini **statis**: pelanggan harus memasukkan nominal pembayaran yang benar di aplikasi pembayaran.
 
 Jika gambar gagal dikirim atau file tidak tersedia, bot memberitahu pelanggan untuk **tidak melakukan transfer dulu** dan meminta admin mengirim QRIS secara manual. Setelah screenshot bukti diterima, admin tetap wajib mengecek mutasi rekening sebelum approve. Periksa apakah nama penerima di aplikasi pembayaran menunjukkan BLACKMAMER STUDIO.
+
+## Panduan instalasi dan chat admin setelah approve (V2.1)
+
+Setelah admin mengirim perintah !approve ID URL, bot mengirim link privat + panduan: buka halaman /extension dari Chrome desktop, unduh dan ekstrak ZIP, pasang di chrome://extensions lewat Developer mode dan Load unpacked, aktifkan Allow user scripts bila tersedia, buka link privat pada browser yang sama, klik Install BMscript dan konfirmasi dari extension.
+
+Pelanggan dapat mengetik PANDUAN atau TUTORIAL untuk membaca ulang instruksi instalasi, atau ADMIN / BANTUAN / CHAT ADMIN untuk membuka tiket bantuan langsung di chat WhatsApp Business.
+
+Admin (nomor ADMIN_WA_NUMBER) dapat memakai !tickets untuk melihat tiket aktif, !reply ID isi pesan untuk membalas pelanggan, dan !close ID untuk menutup tiket. Pelanggan mengetik SELESAI untuk mengakhiri sesi bantuan. Saat sesi bantuan aktif, pesan teks diteruskan ke admin, bukan diperlakukan sebagai perintah durasi atau screenshot pembayaran. Untuk mengirim bukti pembayaran, pelanggan keluar dari sesi bantuan dulu. Balasan admin tidak dijanjikan real-time.
+
+Tiket disimpan bersama pesanan di .bot-data/orders.json dan dipertahankan pada restart Wispbyte. Isi chat bantuan tidak dicatat permanen ke database bot, tetapi diteruskan ke akun WhatsApp admin. Verifikasi transfer dan penerbitan license tetap manual.

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import qrcode from 'qrcode-terminal';
 import {Client} from './baileys-client.js';
 import {createStore} from './store.js';
+import {installationGuide,approvedMessage,isSupportRequest,isSupportExit,isGuideRequest,parseSupportAdminCommand} from './support.js';
 import {clean,formatRupiah,parseDuration,priceFor,matchProductFromWebsite,productBySlug,validInstallLink,parseAdminCommand,paymentCaption} from './core.js';
 
 const site=String(process.env.WEBSITE_URL||'https://blackmamerlicense.vercel.app').replace(/\/$/,'');
@@ -33,12 +34,32 @@ async function catalog(){
 }
 const reply=(msg,text)=>msg.reply(text);
 async function notifyAdmin(text){
- try{await client.sendMessage(adminJid,text);}catch(e){console.error('[ADMIN NOTIFICATION]',e.message);}
+ try{await client.sendMessage(adminJid,text);return true;}catch(e){console.error('[ADMIN NOTIFICATION]',e.message);return false;}
 }
 async function handleAdmin(msg){
+ const supportCmd=parseSupportAdminCommand(msg.body);
+ if(supportCmd){
+  if(supportCmd.op==='tickets'){
+   const tickets=store.listSupport().slice(0,10);
+   return reply(msg,tickets.length?'*TIKET BANTUAN AKTIF*\n'+tickets.map(t=>'#'+t.id+' | '+(t.orderId||'Umum')+' | '+t.jid).join('\n')+'\n\nBalas: !reply ID pesan\nTutup: !close ID':'Tidak ada tiket bantuan aktif.');
+  }
+  const ticket=store.getSupport(supportCmd.id);
+  if(!ticket||ticket.status!=='open')return reply(msg,'Tiket #'+supportCmd.id+' tidak aktif atau tidak ditemukan.');
+  if(supportCmd.op==='reply'){
+   try{
+    await client.sendMessage(ticket.jid,'👨‍💻 *ADMIN BLACKMAMERSTUDIO*\nTiket #'+ticket.id+'\n\n'+supportCmd.message+'\n\nBalas pesan ini untuk melanjutkan. Ketik *SELESAI* jika sudah terbantu.');
+    return reply(msg,'✅ Balasan berhasil dikirim ke tiket #'+ticket.id+'.');
+   }catch(e){return reply(msg,'Balasan gagal: '+clean(e.message,100));}
+  }
+  try{
+   await client.sendMessage(ticket.jid,'✅ Sesi bantuan #'+ticket.id+' telah ditutup oleh admin. Ketik *ADMIN* jika perlu bantuan lagi.');
+   store.closeSupport(ticket.id);
+   return reply(msg,'Tiket #'+ticket.id+' berhasil ditutup.');
+  }catch(e){return reply(msg,'Gagal menutup tiket: '+clean(e.message,100));}
+ }
  const cmd=parseAdminCommand(msg.body);
  if(!cmd)return;
- if(cmd.op==='help')return reply(msg,'*BLACKMAMERSTUDIO Admin*\n!orders — pesanan terakhir\n!approve ID URL — setujui setelah cek transfer dan terbitkan link di website\n!reject ID — tolak pembayaran.\nContoh: !approve A1B2C3D4 https://blackmamerlicense.vercel.app/install#token=...');
+ if(cmd.op==='help')return reply(msg,'*BLACKMAMERSTUDIO ADMIN*\n!orders — pesanan terbaru\n!approve ID URL — setujui pembayaran\n!reject ID — tolak pembayaran\n!tickets — tiket bantuan aktif\n!reply ID pesan — balas pelanggan\n!close ID — tutup tiket\nContoh: !reply A1B2C3D4 Silakan reload Chrome.');
  if(cmd.op==='orders'){
   const last=store.all().slice(0,10);
   return reply(msg,last.length?last.map(o=>o.id+' | '+o.status+' | '+o.productName+' | '+o.days+' hari | '+formatRupiah(o.total||0)).join('\n'):'Belum ada pesanan.');
@@ -57,7 +78,7 @@ async function handleAdmin(msg){
  // License must be issued manually in website Admin > Produk & Akses first.
  store.update(order.id,{status:'approved_sending',installUrl:url});
  try{
-  await client.sendMessage(order.jid,'✅ Pembayaran pesanan '+order.id+' telah disetujui admin.\n\nLink instalasi BMscript BLACKMAMERSTUDIO:\n'+url+'\n\nLink ini privat. Jangan bagikan ke orang lain.');
+  await client.sendMessage(order.jid,approvedMessage({orderId:order.id,installUrl:url,site}));
   store.update(order.id,{status:'completed',deliveredAt:new Date().toISOString()});
   return reply(msg,'Berhasil: link pesanan '+order.id+' terkirim ke pelanggan.');
  }catch(e){
@@ -73,6 +94,36 @@ async function beginOrder(msg,p){
 }
 async function handleCustomer(msg){
  const body=clean(msg.body,1400);
+ if(isGuideRequest(body)){
+  const last=store.all().find(o=>o.jid===msg.from&&o.status==='completed');
+  return reply(msg,last?'📦 Produk terakhir: '+last.productName+'\n\n'+installationGuide(site):
+   'Panduan instalasi akan dikirim setelah license disetujui. Butuh bantuan? Ketik *ADMIN*.');
+ }
+ if(isSupportRequest(body)){
+  const previous=store.activeSupportFor(msg.from);
+  if(previous)return reply(msg,'Tiket *#'+previous.id+'* masih aktif. Tulis pertanyaanmu atau ketik *SELESAI* untuk mengakhiri.');
+  const related=store.forChat(msg.from)||store.all().find(o=>o.jid===msg.from);
+  const {ticket}=store.openSupport(msg.from,related?.id||null);
+  const delivered=await notifyAdmin('🆘 *TIKET BANTUAN BARU*\nID Tiket: *#'+ticket.id+'*\nPesanan: '+(ticket.orderId||'Umum')+'\nChat pelanggan: '+msg.from+'\n\nBalas: *!reply '+ticket.id+' pesan*\nTutup: *!close '+ticket.id+'*');
+  if(!delivered){
+   store.closeSupport(ticket.id);
+   return reply(msg,'Maaf, admin belum bisa dihubungi. Silakan coba *ADMIN* lagi nanti.');
+  }
+  return reply(msg,'👨‍💻 *LAYANAN BANTUAN BLACKMAMERSTUDIO*\n\nTiket *#'+ticket.id+'* sudah dibuka.\nTulis pertanyaanmu di chat ini dan bot meneruskannya ke admin. Admin membalas saat tersedia.\n\nKetik *SELESAI* untuk kembali ke alur bot.');
+ }
+ const ticket=store.activeSupportFor(msg.from);
+ if(ticket){
+  if(isSupportExit(body)){
+   store.closeSupport(ticket.id);
+   await notifyAdmin('✅ Pelanggan sudah menutup tiket *#'+ticket.id+'*.');
+   return reply(msg,'Tiket #'+ticket.id+' ditutup. Terima kasih! 🙌\nSilakan lanjutkan pesanan, atau ketik *ADMIN* jika masih ada pertanyaan.');
+  }
+  if(msg.hasMedia)return reply(msg,'Untuk tiket bantuan, tulis pertanyaan berupa *teks*. Jika ingin mengirim screenshot bukti pembayaran, ketik *SELESAI* dahulu lalu kirim screenshot.');
+  if(!body)return reply(msg,'Silakan tulis pertanyaanmu, atau ketik *SELESAI*.');
+  const delivered=await notifyAdmin('💬 *PESAN PELANGGAN — TIKET #'+ticket.id+'*\nDari: '+msg.from+'\nPesanan: '+(ticket.orderId||'Umum')+'\n\n'+body+'\n\nBalas: *!reply '+ticket.id+' pesan*');
+  return reply(msg,delivered?'✅ Pertanyaanmu sudah diteruskan ke admin. Balasan muncul di chat ini.':
+   'Pesan gagal diteruskan ke admin. Silakan kirim ulang nanti.');
+ }
  if(/^!(menu|produk)$/i.test(body)){
   const items=await catalog();
   return reply(msg,'*Katalog BMscript BLACKMAMERSTUDIO*\n'+items.map(x=>'• '+x.name+' ('+x.slug+') — '+(Number.isInteger(Number(x.price))?formatRupiah(Number(x.price))+'/hari':'Tanya admin')).join('\n')+'\n\nPesan dengan mengetik: !order slug');

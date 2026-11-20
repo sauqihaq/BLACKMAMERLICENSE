@@ -113,3 +113,54 @@ test('customers may reply with just digits and bot gives number-only instruction
  assert.match(source,/Cukup ketik \*angka jumlah hari\*/);
  assert.match(source,/mengirim QRIS pembayaran/);
 });
+
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createStore} from '../whatsapp-bot/store.js';
+import {installationGuide,approvedMessage,isSupportRequest,isSupportExit,isGuideRequest,parseSupportAdminCommand} from '../whatsapp-bot/support.js';
+
+test('approved message includes real extension and BMscript setup',()=>{
+ const link=site+'/install#token='+'a'.repeat(64);
+ const value=approvedMessage({orderId:'A1B2C3D4',installUrl:link,site});
+ for(const part of ['/extension','chrome://extensions','Developer mode','Load unpacked','manifest.json','Allow user scripts','Install BMscript','ADMIN',link]){
+  assert.ok(value.includes(part),part);
+ }
+ assert.ok(!installationGuide(site).includes('#token'));
+ assert.throws(()=>approvedMessage({orderId:'A1B2C3D4',installUrl:'https://evil.example/install#token='+'a'.repeat(64),site}));
+});
+test('support commands and customer guide are parsed without changing checkout',()=>{
+ for(const input of ['ADMIN','BANTUAN','chat admin','hubungi admin'])assert.equal(isSupportRequest(input),true);
+ for(const input of ['PANDUAN','TUTORIAL','cara pasang'])assert.equal(isGuideRequest(input),true);
+ assert.equal(isSupportExit('SELESAI'),true);
+ assert.equal(isSupportRequest('7'),false);
+ assert.deepEqual(parseSupportAdminCommand('!tickets'),{op:'tickets'});
+ assert.deepEqual(parseSupportAdminCommand('!reply a1b2c3d4 Halo'),{op:'reply',id:'A1B2C3D4',message:'Halo'});
+ assert.deepEqual(parseSupportAdminCommand('!close A1B2C3D4'),{op:'close',id:'A1B2C3D4'});
+ for(const input of ['!reply A1B2C3D4','!close A1B2C3D4 Halo','!approve A1B2C3D4','!reply invalid Halo'])assert.equal(parseSupportAdminCommand(input),null);
+});
+test('support tickets persist across restart without changing previous orders',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'blackmamer-support-'));
+ try{
+  const db=createStore(dir),jid='6281256789012@c.us';
+  const order=db.create({jid,productName:'Tripo',productSlug:'tripo'});
+  const {ticket,created}=db.openSupport(jid,order.id);
+  assert.equal(created,true);
+  assert.equal(db.openSupport(jid).created,false);
+  const restored=createStore(dir);
+  assert.equal(restored.get(order.id)?.status,'choose_duration');
+  assert.equal(restored.activeSupportFor(jid)?.id,ticket.id);
+  assert.equal(restored.listSupport().length,1);
+  assert.equal(restored.closeSupport(ticket.id)?.status,'closed');
+  assert.equal(createStore(dir).activeSupportFor(jid),null);
+ }finally{rmSync(dir,{force:true,recursive:true});}
+});
+test('support routing does not override approve or QRIS and requires admin JID',()=>{
+ const source=readFileSync(new URL('../whatsapp-bot/index.js',import.meta.url),'utf8');
+ assert.ok(source.indexOf('if(isSupportRequest(body))')<source.indexOf("if(/^!(menu|produk)$/i.test(body))"));
+ assert.match(source,/const admin=msg\.from===adminJid/);
+ assert.match(source,/parseSupportAdminCommand\(msg\.body\)/);
+ assert.match(source,/client\.sendMessage\(ticket\.jid/);
+ assert.match(source,/approvedMessage\(\{orderId:order\.id,installUrl:url,site\}\)/);
+ assert.match(source,/store\.closeSupport/);
+});
