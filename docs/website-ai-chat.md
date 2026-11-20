@@ -2,17 +2,18 @@
 
 Widget mengambang ada di sisi kanan bawah homepage, mengikuti tema hitam-merah dan berfungsi di desktop serta ponsel. Ini **bukan bot WhatsApp**; checkout/QRIS/approval dan sesi Baileys tidak berubah.
 
-## Mengaktifkan AI gratis (Gemini)
+## Mengaktifkan AI gratis lewat GroqCloud
 
-Default widget tetap bekerja sebagai **asisten panduan/FAQ** saat belum ada API key. Untuk membuat jawaban bebas dari AI:
+Default widget memakai **FAQ otomatis** tanpa API key. Untuk chatbot AI sungguhan di free tier (tanpa mengaktifkan billing):
 
-1. Buka https://aistudio.google.com/apikey dan buat Gemini API key di **free tier** yang memenuhi syarat. Pastikan project/model memang punya kuota gratis; tanpa billing untuk menghindari pengeluaran.
-2. Buka Vercel Dashboard → BLACKMAMERLICENSE → Settings → Environment Variables.
-3. Tambahkan nama **GEMINI_API_KEY**, isi API key secara privat. Pilih Production (dan Preview jika dibutuhkan).
-4. Klik Redeploy di Vercel. Jangan pernah memasukkan key ke frontend, GitHub, file publik, atau membagikannya di chat.
-5. Widget akan memakai Gemini 3.5 Flash-Lite via endpoint server-side /api/ai-chat (rewrite ke health function existing) dengan batas input/output. Jika key belum disetel, kuota habis, atau provider gagal, asisten FAQ otomatis tetap menjawab, dengan label mode yang jelas.
+1. Buat akun gratis di https://console.groq.com/ dan tetap di **Free Plan**. Jangan upgrade ke paket Developer atau menambahkan metode pembayaran.
+2. Buka https://console.groq.com/keys lalu buat API key baru.
+3. Buka **Vercel → BLACKMAMERLICENSE → Settings → Environment Variables**.
+4. Simpan key sebagai **Secret** dengan nama `GROQ_API_KEY` dan pilih Production. Jangan letakkan key di source atau chat.
+5. Redeploy Production. Website akan memanggil model **openai/gpt-oss-20b** melalui Groq chat completions endpoint di backend.
+6. Kode lama `GEMINI_API_KEY` tidak digunakan lagi pada website. Hapus dari Vercel bila tidak diperlukan.
 
-Model dan batas gratis dapat berubah; lihat dokumentasi harga resmi https://ai.google.dev/gemini-api/docs/pricing dan kuota dashboard proyek kamu. Tidak ada jaminan layanan tanpa biaya tanpa memeriksa tier/billing project. Penggunaan komersial website juga harus mengikuti syarat hosting Vercel yang dipakai.
+Groq Free Plan punya batas kuota yang bisa berubah. Saat batas tercapai atau API tidak tersedia, frontend tetap menerima jawaban FAQ dan pesan diagnostik. Cek batas akun pada https://console.groq.com/settings/limits dan dokumentasi resmi https://console.groq.com/docs/rate-limits. Situs tetap harus mematuhi kebijakan Vercel terkait penggunaan komersial.
 
 ## Keamanan dan batasan
 
@@ -24,4 +25,4 @@ Model dan batas gratis dapat berubah; lihat dokumentasi harga resmi https://ai.g
 
 ## Jika tetap fallback setelah Redeploy
 
-Saat Gemini mengembalikan error, bubble akan menunjukkan kode penyebab aman tanpa membocorkan API key: 401 (key ditolak), 403 (proyek tidak punya akses/free tier), 404 (model tidak ada untuk proyek), 429 (kuota habis atau nol), 400 (permintaan ditolak). Periksa Vercel Logs untuk kode `[BM AI CHAT] Gemini`, kemudian buka Google AI Studio Rate limits untuk status proyek. Jika status 403 karena free tier tidak tersedia, mengganti kode frontend tidak dapat mengatasi pembatasan proyek. Tidak perlu mengaktifkan billing hanya untuk menguji website.
+Jika tidak ada API key, mode akan mengirim NOT_CONFIGURED. Ketika Groq merespons error, fallback memberikan kode aman: 401 (key ditolak), 403 (izin akses), 404 (model tidak tersedia), 429 (kuota Free Plan), 400 (permintaan salah). Log Vercel hanya mencatat kode HTTP dan model, bukan API key atau isi chat. Jangan mengaktifkan billing untuk mengatasi masalah tanpa memeriksa batas paket gratis.

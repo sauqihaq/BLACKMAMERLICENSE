@@ -23,7 +23,7 @@ test('AI widget is mounted bottom-right without changing existing checkout',()=>
  assert.match(html,/\/store\.js/);
 });
 test('AI prompt prevents ungrounded payment and secret requests',()=>{
- assert.equal(AI_MODEL,'gemini-3.5-flash-lite');
+ assert.equal(AI_MODEL,'openai/gpt-oss-20b');
  assert.match(SYSTEM_PROMPT,/tidak pernah diverifikasi otomatis/);
  assert.match(SYSTEM_PROMPT,/Jangan mengarang harga/);
  assert.equal(containsSensitiveInput('https://example.com/install#token='+'a'.repeat(64)),true);
@@ -54,12 +54,12 @@ test('API enforces POST, same origin and no secrets',async()=>{
  await handler({...base,headers:{...base.headers,origin:'https://fake.test'}},response);assert.equal(response.statusCode,403);
  response=mockRes();
  await handler({...base,body:{message:'#token='+'a'.repeat(64)}},response);assert.equal(response.statusCode,400);
- const old=process.env.GEMINI_API_KEY;delete process.env.GEMINI_API_KEY;
+ const old=process.env.GROQ_API_KEY;delete process.env.GROQ_API_KEY;
  try{response=mockRes();await handler(base,response);
  assert.equal(response.statusCode,200);
  assert.equal(response.body.mode,'faq');
  assert.ok(response.body.reply);
- }finally{if(old!==undefined)process.env.GEMINI_API_KEY=old;}
+ }finally{if(old!==undefined)process.env.GROQ_API_KEY=old;}
 });
 test('vercel serves AI endpoint via rewrite',()=>{
  const config=JSON.parse(readFileSync('vercel.json','utf8'));
@@ -68,9 +68,9 @@ test('vercel serves AI endpoint via rewrite',()=>{
 
 test('fallback status provides actionable diagnosis without leaking API key',async()=>{
  const base={method:'POST',headers:{origin:'https://blackmamerlicense.vercel.app',host:'blackmamerlicense.vercel.app','content-type':'application/json'},body:{message:'TUTOR'}};
- const previous=process.env.GEMINI_API_KEY,original=globalThis.fetch;
+ const previous=process.env.GROQ_API_KEY,original=globalThis.fetch;
  try{
-  process.env.GEMINI_API_KEY='PRIVATE_TEST_KEY_DO_NOT_EXPOSE';
+  process.env.GROQ_API_KEY='PRIVATE_TEST_KEY_DO_NOT_EXPOSE';
   for(const [http,reason] of [[400,'INVALID_REQUEST'],[403,'PROJECT_ACCESS_DENIED'],[404,'MODEL_UNAVAILABLE'],[429,'QUOTA_EXCEEDED'],[503,'PROVIDER_UNAVAILABLE']]){
    globalThis.fetch=async()=>({ok:false,status:http});
    const result=mockRes();
@@ -84,6 +84,37 @@ test('fallback status provides actionable diagnosis without leaking API key',asy
   }
  }finally{
   globalThis.fetch=original;
-  if(previous===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=previous;
+  if(previous===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=previous;
+ }
+});
+
+test('Groq Free Plan endpoint sends correct bearer authorization and preserves safety prompt',async()=>{
+ const prev=process.env.GROQ_API_KEY,oldFetch=globalThis.fetch;
+ let call=null;
+ process.env.GROQ_API_KEY='TEST_GROQ_KEY_NOT_REAL';
+ try{
+  globalThis.fetch=async (url,opts)=>{
+   call={url,opts};
+   return {ok:true,status:200,json:async()=>({choices:[{message:{content:'Halo! Silakan buka halaman extension.'}}]})};
+  };
+  const req={method:'POST',headers:{origin:'https://blackmamerlicense.vercel.app',host:'blackmamerlicense.vercel.app','content-type':'application/json'},body:{message:'Bagaimana cara install?'}};
+  const res=mockRes();
+  await handler(req,res);
+  assert.equal(res.statusCode,200);
+  assert.equal(res.body.mode,'ai');
+  assert.equal(res.body.provider,'Groq Free');
+  assert.match(res.body.reply,/Halo!/);
+  assert.equal(call.url,'https://api.groq.com/openai/v1/chat/completions');
+  assert.equal(call.opts.headers.Authorization,'Bearer TEST_GROQ_KEY_NOT_REAL');
+  const body=JSON.parse(call.opts.body);
+  assert.equal(body.model,'openai/gpt-oss-20b');
+  assert.equal(body.messages[0].role,'system');
+  assert.match(body.messages[0].content,/tidak pernah diverifikasi otomatis/);
+  assert.equal(body.messages.at(-1).role,'user');
+  assert.equal(body.messages.at(-1).content,'Bagaimana cara install?');
+  assert.ok(!JSON.stringify(res.body).includes('TEST_GROQ_KEY_NOT_REAL'));
+ }finally{
+  globalThis.fetch=oldFetch;
+  if(prev===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=prev;
  }
 });
