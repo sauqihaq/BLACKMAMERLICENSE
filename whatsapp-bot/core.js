@@ -26,7 +26,11 @@ export function matchProductFromWebsite(message,catalog){
  const body=clean(message,1300).toLocaleLowerCase('id-ID');
  if(!body.includes('blackmamerstudio')||!body.includes('mau pesan'))return null;
  const products=[...(catalog||[])].filter(p=>p?.name&&p?.slug).sort((a,b)=>b.name.length-a.name.length);
- const selected=products.find(p=>body.includes('mau pesan '+String(p.name).toLocaleLowerCase('id-ID')+'.'));
+ // Stable product code from the new website. Legacy name-only checkout still works.
+ const code=/\bKode Produk:\s*([a-z][a-z0-9-]{2,35})\b/i.exec(body);
+ const selected=code
+  ?products.find(p=>p.slug===code[1].toLowerCase())
+  :products.find(p=>body.includes('mau pesan '+String(p.name).toLocaleLowerCase('id-ID')+'.'));
  if(!selected)return null;
  const name=/\bNama:\s*([^\n.]+)\./i.exec(message);
  return {product:selected,customer:clean(name?.[1]||'Pelanggan',100)};

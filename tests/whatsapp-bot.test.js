@@ -70,3 +70,12 @@ test('text and media extraction unwrap ephemeral messages and captures',()=>{
  assert.equal(attachment({documentMessage:{mimetype:'application/pdf'}}).type,'document');
  assert.equal(attachment({conversation:'Hi'}),null);
 });
+
+test('website order with stable product slug survives product display-name changes',()=>{
+ const message='Halo BLACKMAMERSTUDIO, saya mau pesan Tripo3D Studio. Kode Produk: tripo. Harga: Rp1. Nama: Pelanggan. Mohon konfirmasi durasi lisensi.';
+ const catalogAfterRename=[{name:'Tripo3D Studio PRO',slug:'tripo',price:12000}];
+ assert.equal(matchProductFromWebsite(message,catalogAfterRename)?.product.slug,'tripo');
+ assert.equal(matchProductFromWebsite(message,catalog)?.customer,'Pelanggan');
+ assert.equal(matchProductFromWebsite(message.replace('Kode Produk: tripo','Kode Produk: invalid-tool'),catalog),null);
+ assert.equal(priceFor(catalogAfterRename[0],14),168000);
+});
